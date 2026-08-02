@@ -1,0 +1,854 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Рулетка гифтов</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg-0:#080a12;
+    --bg-1:#0e1220;
+    --panel:#121729;
+    --panel-2:#161c33;
+    --line:rgba(245,185,66,0.14);
+    --text:#e9ebf6;
+    --text-dim:#8891ac;
+    --gold:#f5b942;
+    --gold-2:#ffd874;
+    --common:#4fd1c5;
+    --uncommon:#5b9cff;
+    --rare:#a78bfa;
+    --epic:#f472b6;
+    --mythic-a:#ffd700;
+    --mythic-b:#ff6ec7;
+    --mythic-c:#7ce7ff;
+    --danger:#ff6b6b;
+    --radius:18px;
+  }
+
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    min-height:100vh;
+    background:
+      radial-gradient(1px 1px at 12% 18%, rgba(255,255,255,0.7), transparent),
+      radial-gradient(1px 1px at 27% 62%, rgba(255,255,255,0.5), transparent),
+      radial-gradient(1.5px 1.5px at 41% 8%, rgba(255,255,255,0.6), transparent),
+      radial-gradient(1px 1px at 63% 44%, rgba(255,255,255,0.4), transparent),
+      radial-gradient(1.5px 1.5px at 78% 71%, rgba(255,255,255,0.55), transparent),
+      radial-gradient(1px 1px at 89% 22%, rgba(255,255,255,0.4), transparent),
+      radial-gradient(1px 1px at 6% 85%, rgba(255,255,255,0.4), transparent),
+      radial-gradient(1.5px 1.5px at 55% 90%, rgba(255,255,255,0.5), transparent),
+      radial-gradient(120% 90% at 50% -10%, #171d36 0%, var(--bg-1) 45%, var(--bg-0) 100%);
+    background-attachment:fixed;
+    font-family:'Inter', system-ui, sans-serif;
+    color:var(--text);
+    display:flex;
+    justify-content:center;
+    padding:28px 14px 60px;
+  }
+
+  h1,h2{font-family:'Space Grotesk', sans-serif; margin:0;}
+
+  .stage{
+    width:100%;
+    max-width:460px;
+    display:flex;
+    flex-direction:column;
+    gap:20px;
+  }
+
+  /* Header */
+  header{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+  }
+  .brand{display:flex; align-items:center; gap:9px;}
+  .brand-icon{
+    font-size:22px;
+    color:var(--gold);
+    filter:drop-shadow(0 0 8px rgba(245,185,66,0.7));
+  }
+  .brand h1{font-size:19px; font-weight:700; letter-spacing:0.2px;}
+
+  .topbar-right{display:flex; align-items:center; gap:10px;}
+
+  .balance{
+    display:flex; align-items:center; gap:6px;
+    background:var(--panel);
+    border:1px solid var(--line);
+    padding:7px 12px;
+    border-radius:999px;
+    font-family:'JetBrains Mono', monospace;
+    font-weight:700;
+    font-size:14px;
+  }
+  .balance .star{color:var(--gold); font-size:14px;}
+  #balanceValue{transition:color 0.3s ease;}
+  #balanceValue.flash-down{color:var(--danger);}
+  #balanceValue.flash-up{color:var(--gold-2);}
+
+  .demo-toggle{
+    display:flex; align-items:center; gap:6px;
+    cursor:pointer;
+    user-select:none;
+    background:var(--panel);
+    border:1px solid var(--line);
+    padding:6px 10px 6px 6px;
+    border-radius:999px;
+  }
+  .demo-toggle input{display:none;}
+  .demo-slider{
+    width:30px; height:17px;
+    border-radius:999px;
+    background:#2a3150;
+    position:relative;
+    transition:background 0.25s ease;
+    flex-shrink:0;
+  }
+  .demo-slider::after{
+    content:'';
+    position:absolute;
+    top:2px; left:2px;
+    width:13px; height:13px;
+    border-radius:50%;
+    background:var(--text-dim);
+    transition:transform 0.25s ease, background 0.25s ease;
+  }
+  .demo-toggle input:checked + .demo-slider{background:rgba(245,185,66,0.35);}
+  .demo-toggle input:checked + .demo-slider::after{transform:translateX(13px); background:var(--gold);}
+  .demo-label{font-size:12px; color:var(--text-dim); font-weight:600;}
+
+  .eyebrow{
+    font-size:12px;
+    letter-spacing:0.12em;
+    text-transform:uppercase;
+    color:var(--text-dim);
+    text-align:center;
+    margin-top:-8px;
+  }
+
+  /* Reel */
+  .reel-wrap{position:relative;}
+  .reel-viewport{
+    position:relative;
+    height:150px;
+    overflow:hidden;
+    border-radius:var(--radius);
+    background:linear-gradient(180deg, var(--panel), var(--panel-2));
+    border:1px solid var(--line);
+    box-shadow: inset 0 0 40px rgba(0,0,0,0.4);
+  }
+  .reel-track{
+    display:flex;
+    position:absolute;
+    top:0; left:0;
+    height:100%;
+    transform:translateX(0px);
+    will-change:transform;
+  }
+  .reel-card{
+    flex:0 0 110px;
+    width:110px;
+    margin:8px 6px;
+    border-radius:14px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    gap:6px;
+    background:rgba(255,255,255,0.03);
+    border:1px solid var(--tier-c, var(--line));
+    box-shadow:0 0 16px -6px var(--tier-c, transparent);
+    position:relative;
+  }
+  .reel-card .reel-icon{font-size:36px; filter:drop-shadow(0 2px 6px rgba(0,0,0,0.5));}
+  .reel-card .reel-cost{
+    font-family:'JetBrains Mono', monospace;
+    font-size:11px; font-weight:700;
+    color:var(--tier-c, var(--text-dim));
+  }
+  .tier-common{--tier-c:var(--common);}
+  .tier-uncommon{--tier-c:var(--uncommon);}
+  .tier-rare{--tier-c:var(--rare);}
+  .tier-epic{--tier-c:var(--epic);}
+  .tier-mythic{--tier-c:var(--mythic-b);}
+  .tier-mythic .reel-icon{
+    background:linear-gradient(90deg,var(--mythic-a),var(--mythic-b),var(--mythic-c));
+    -webkit-background-clip:text;
+    background-clip:text;
+    filter:none;
+  }
+
+  .pointer{
+    position:absolute;
+    top:0; left:50%;
+    transform:translateX(-50%);
+    width:2px;
+    height:100%;
+    background:linear-gradient(180deg, var(--gold-2), var(--gold));
+    box-shadow:0 0 14px 2px rgba(245,185,66,0.8);
+    z-index:5;
+  }
+  .pointer::before, .pointer::after{
+    content:'';
+    position:absolute;
+    left:50%; transform:translateX(-50%);
+    width:0; height:0;
+    border-left:6px solid transparent;
+    border-right:6px solid transparent;
+  }
+  .pointer::before{top:-1px; border-top:8px solid var(--gold);}
+  .pointer::after{bottom:-1px; border-bottom:8px solid var(--gold);}
+
+  .edge-fade{
+    position:absolute; top:0; bottom:0; width:46px; z-index:4; pointer-events:none;
+  }
+  .edge-fade.left{left:0; background:linear-gradient(90deg, var(--panel), transparent);}
+  .edge-fade.right{right:0; background:linear-gradient(-90deg, var(--panel), transparent);}
+
+  .win-pulse{animation:winPulse 0.9s ease-out;}
+  @keyframes winPulse{
+    0%{box-shadow:0 0 0px var(--tier-c);}
+    35%{box-shadow:0 0 34px 6px var(--tier-c);}
+    100%{box-shadow:0 0 16px -6px var(--tier-c);}
+  }
+
+  /* Controls */
+  .controls{display:flex; gap:10px;}
+  .spin-btn{
+    flex:1;
+    display:flex; align-items:center; justify-content:center; gap:8px;
+    background:linear-gradient(180deg, var(--gold-2), var(--gold));
+    color:#241300;
+    border:none;
+    border-radius:14px;
+    padding:15px 18px;
+    font-family:'Space Grotesk', sans-serif;
+    font-weight:700;
+    font-size:16px;
+    cursor:pointer;
+    box-shadow:0 8px 20px -8px rgba(245,185,66,0.6);
+    transition:transform 0.12s ease, box-shadow 0.12s ease, opacity 0.2s ease;
+  }
+  .spin-btn:active{transform:scale(0.97);}
+  .spin-btn:disabled{
+    opacity:0.45;
+    cursor:not-allowed;
+    box-shadow:none;
+  }
+  .spin-btn-cost{
+    font-family:'JetBrains Mono', monospace;
+    font-size:13px;
+    background:rgba(0,0,0,0.15);
+    padding:3px 8px;
+    border-radius:999px;
+  }
+  .shake{animation:shake 0.4s ease;}
+  @keyframes shake{
+    0%,100%{transform:translateX(0);}
+    20%{transform:translateX(-6px);}
+    40%{transform:translateX(6px);}
+    60%{transform:translateX(-4px);}
+    80%{transform:translateX(4px);}
+  }
+
+  .topup-btn{
+    background:var(--panel);
+    color:var(--text);
+    border:1px solid var(--line);
+    border-radius:14px;
+    padding:15px 16px;
+    font-family:'Inter', sans-serif;
+    font-weight:600;
+    font-size:13px;
+    cursor:pointer;
+    white-space:nowrap;
+    transition:border-color 0.2s ease, background 0.2s ease;
+  }
+  .topup-btn:hover{border-color:var(--gold); background:var(--panel-2);}
+
+  .demo-badge{
+    text-align:center;
+    font-size:12px;
+    color:var(--gold-2);
+    background:rgba(245,185,66,0.08);
+    border:1px solid rgba(245,185,66,0.25);
+    padding:9px 12px;
+    border-radius:12px;
+    line-height:1.4;
+  }
+  .hidden{display:none !important;}
+
+  .result-banner{
+    text-align:center;
+    font-size:14px;
+    font-weight:600;
+    min-height:20px;
+    opacity:0;
+    transition:opacity 0.35s ease;
+  }
+  .result-banner.show{opacity:1;}
+
+  /* Prizes */
+  section h2{
+    font-size:14px;
+    text-transform:uppercase;
+    letter-spacing:0.08em;
+    color:var(--text-dim);
+    margin-bottom:12px;
+  }
+  .prize-grid{
+    display:grid;
+    grid-template-columns:repeat(3, 1fr);
+    gap:8px;
+  }
+  .prize-item{
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-left:3px solid var(--tier-c, var(--line));
+    border-radius:12px;
+    padding:10px 8px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:3px;
+    text-align:center;
+  }
+  .prize-item .p-icon{font-size:24px;}
+  .prize-item .p-name{font-size:11px; font-weight:600; color:var(--text);}
+  .prize-item .p-cost{font-size:10px; font-family:'JetBrains Mono', monospace; color:var(--text-dim);}
+
+  /* Inventory */
+  .inv-header{
+    display:flex;
+    align-items:baseline;
+    justify-content:space-between;
+    margin-bottom:12px;
+  }
+  .inv-header h2{margin-bottom:0;}
+  .inv-count{
+    font-size:11px;
+    font-family:'JetBrains Mono', monospace;
+    color:var(--text-dim);
+  }
+  .inventory-list{
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+    max-height:280px;
+    overflow-y:auto;
+  }
+  .inventory-empty{
+    display:block;
+    font-size:12.5px;
+    color:var(--text-dim);
+    text-align:center;
+    padding:16px 10px;
+    background:var(--panel);
+    border:1px dashed var(--line);
+    border-radius:12px;
+    line-height:1.5;
+  }
+  .inventory-row{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-left:3px solid var(--tier-c, var(--line));
+    border-radius:12px;
+    padding:9px 10px;
+    animation:rowIn 0.3s ease;
+  }
+  .inventory-row .inv-icon{font-size:22px;}
+  .inventory-row .inv-info{flex:1; min-width:0;}
+  .inventory-row .inv-name{font-size:12.5px; font-weight:600;}
+  .inventory-row .inv-value{font-size:10.5px; font-family:'JetBrains Mono', monospace; color:var(--text-dim);}
+  .inv-actions{display:flex; gap:6px; flex-shrink:0;}
+  .inv-btn{
+    border:1px solid var(--line);
+    background:var(--panel-2);
+    color:var(--text);
+    font-family:'Inter', sans-serif;
+    font-size:11px;
+    font-weight:600;
+    padding:7px 10px;
+    border-radius:9px;
+    cursor:pointer;
+    white-space:nowrap;
+    transition:border-color 0.2s ease, transform 0.12s ease;
+  }
+  .inv-btn:active{transform:scale(0.95);}
+  .inv-btn.sell:hover{border-color:var(--gold);}
+  .inv-btn.withdraw{
+    background:linear-gradient(180deg, var(--gold-2), var(--gold));
+    color:#241300;
+    border-color:transparent;
+  }
+
+  .toast{
+    position:fixed;
+    left:50%;
+    bottom:24px;
+    transform:translateX(-50%) translateY(20px);
+    background:var(--panel-2);
+    border:1px solid var(--line);
+    color:var(--text);
+    font-size:12.5px;
+    font-weight:600;
+    padding:10px 16px;
+    border-radius:999px;
+    box-shadow:0 12px 30px -10px rgba(0,0,0,0.6);
+    opacity:0;
+    pointer-events:none;
+    transition:opacity 0.25s ease, transform 0.25s ease;
+    z-index:60;
+    max-width:88vw;
+    text-align:center;
+  }
+  .toast.show{opacity:1; transform:translateX(-50%) translateY(0);}
+
+  /* History */
+  .history-list{
+    display:flex;
+    flex-direction:column;
+    gap:7px;
+    max-height:220px;
+    overflow-y:auto;
+  }
+  .history-empty{
+    font-size:12.5px;
+    color:var(--text-dim);
+    text-align:center;
+    padding:14px 0;
+  }
+  .history-row{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-left:3px solid var(--tier-c, var(--line));
+    border-radius:10px;
+    padding:8px 10px;
+    font-size:12.5px;
+    animation:rowIn 0.3s ease;
+  }
+  @keyframes rowIn{from{opacity:0; transform:translateY(-4px);} to{opacity:1; transform:translateY(0);}}
+  .history-row .h-icon{font-size:18px;}
+  .history-row .h-name{flex:1; font-weight:600;}
+  .history-row .h-cost{font-family:'JetBrains Mono', monospace; color:var(--text-dim);}
+  .history-row .h-time{font-size:10.5px; color:var(--text-dim); font-family:'JetBrains Mono', monospace;}
+  .history-row.demo-row .h-time::before{content:'демо · '; color:var(--gold-2);}
+
+  footer{
+    text-align:center;
+    font-size:10.5px;
+    line-height:1.6;
+    color:var(--text-dim);
+    padding-top:4px;
+    border-top:1px solid var(--line);
+    padding-top:14px;
+  }
+
+  .confetti-layer{
+    position:fixed;
+    inset:0;
+    pointer-events:none;
+    overflow:hidden;
+    z-index:50;
+  }
+  .confetti-piece{
+    position:absolute;
+    top:-20px;
+    font-size:16px;
+    animation:confettiFall linear forwards;
+  }
+  @keyframes confettiFall{
+    to{transform:translateY(105vh) rotate(360deg); opacity:0.2;}
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    *{animation-duration:0.01ms !important; transition-duration:0.01ms !important;}
+  }
+</style>
+</head>
+<body>
+
+<div class="stage">
+  <header>
+    <div class="brand">
+      <span class="brand-icon">✦</span>
+      <h1>Рулетка гифтов</h1>
+    </div>
+    <div class="topbar-right">
+      <div class="balance"><span class="star">⭐</span><span id="balanceValue">300</span></div>
+    </div>
+  </header>
+
+  <div class="eyebrow">Крутите барабан — выигрывайте гифты за звёзды</div>
+
+  <div class="reel-wrap">
+    <div class="reel-viewport">
+      <div class="pointer"></div>
+      <div class="reel-track" id="reelTrack"></div>
+      <div class="edge-fade left"></div>
+      <div class="edge-fade right"></div>
+    </div>
+  </div>
+
+  <div class="controls">
+    <button id="spinBtn" class="spin-btn">
+      <span class="spin-btn-label">Крутить</span>
+      <span class="spin-btn-cost" id="spinCostLabel">⭐ 30</span>
+    </button>
+    <button id="topupBtn" class="topup-btn">+100 ⭐</button>
+  </div>
+
+  <label class="demo-toggle" style="align-self:center;">
+    <input type="checkbox" id="demoToggle">
+    <span class="demo-slider"></span>
+    <span class="demo-label">Демо-режим</span>
+  </label>
+
+  <div id="demoBadge" class="demo-badge hidden">
+    Демо-режим: бесплатные пробные прокруты для знакомства с механикой.
+  </div>
+
+  <div class="result-banner" id="resultBanner"></div>
+
+  <section class="inventory">
+    <div class="inv-header">
+      <h2>Инвентарь</h2>
+      <span class="inv-count" id="invCount">0 гифтов</span>
+    </div>
+    <div class="inventory-list" id="inventoryList">
+      <span class="inventory-empty">Здесь появятся гифты, выигранные в обычном режиме — их можно продать за звёзды или вывести</span>
+    </div>
+  </section>
+
+  <section class="prizes">
+    <h2>Призы</h2>
+    <div class="prize-grid" id="prizeGrid"></div>
+  </section>
+
+  <section class="history">
+    <h2>История прокрутов</h2>
+    <div class="history-list" id="historyList">
+      <span class="history-empty">Пока пусто — сделайте первый прокрут</span>
+    </div>
+  </section>
+
+  <footer>
+    Это фронтенд-витрина механики розыгрыша. Баланс звёзд, продажа и вывод гифтов здесь имитируются — для реальных операций с Telegram Stars нужна серверная интеграция с Bot Payments API.
+  </footer>
+</div>
+
+<div class="confetti-layer" id="confettiLayer"></div>
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+  const PRIZES = [
+    { id:'mishka',  name:'Мишка',        icon:'🧸', cost:15,  tier:'common' },
+    { id:'serdce',  name:'Сердечко',     icon:'💖', cost:15,  tier:'common' },
+    { id:'roza',    name:'Роза',         icon:'🌹', cost:25,  tier:'uncommon' },
+    { id:'podarok', name:'Подарок',      icon:'🎁', cost:25,  tier:'uncommon' },
+    { id:'raketa',  name:'Ракета',       icon:'🚀', cost:50,  tier:'rare' },
+    { id:'buket',   name:'Букет',        icon:'💐', cost:50,  tier:'rare' },
+    { id:'kubok',   name:'Кубок',        icon:'🏆', cost:100, tier:'epic' },
+    { id:'almaz',   name:'Алмаз',        icon:'💎', cost:100, tier:'epic' },
+    { id:'nft',     name:'NFT леденец',  icon:'🍭', cost:null,tier:'mythic' },
+  ];
+
+  const WEIGHTS_NORMAL = { mishka:26, serdce:24, roza:14, podarok:13, raketa:8, buket:7, kubok:4, almaz:3, nft:1 };
+  const WEIGHTS_DEMO   = { mishka:8,  serdce:8,  roza:10, podarok:10, raketa:16, buket:15, kubok:15, almaz:13, nft:5 };
+
+  const SPIN_COST = 30;
+  const CARD_FULL = 110 + 12; // width + margins
+  const NFT_BASE_VALUE = 500;
+  const SELL_RATE = 0.9; // комиссия площадки 10%
+
+  let balance = 300;
+  let isDemo = false;
+  let spinning = false;
+  let inventory = [];
+  let nextInvId = 1;
+
+  const els = {
+    balance: document.getElementById('balanceValue'),
+    demoToggle: document.getElementById('demoToggle'),
+    demoBadge: document.getElementById('demoBadge'),
+    spinBtn: document.getElementById('spinBtn'),
+    spinCostLabel: document.getElementById('spinCostLabel'),
+    topupBtn: document.getElementById('topupBtn'),
+    resultBanner: document.getElementById('resultBanner'),
+    prizeGrid: document.getElementById('prizeGrid'),
+    historyList: document.getElementById('historyList'),
+    reelTrack: document.getElementById('reelTrack'),
+    reelViewport: document.querySelector('.reel-viewport'),
+    confettiLayer: document.getElementById('confettiLayer'),
+    inventoryList: document.getElementById('inventoryList'),
+    invCount: document.getElementById('invCount'),
+    toast: document.getElementById('toast'),
+  };
+
+  function currentWeights(){ return isDemo ? WEIGHTS_DEMO : WEIGHTS_NORMAL; }
+
+  function weightedPick(weights){
+    const total = Object.values(weights).reduce((a,b)=>a+b,0);
+    let r = Math.random() * total;
+    for(const id in weights){
+      r -= weights[id];
+      if(r <= 0) return id;
+    }
+    return Object.keys(weights)[0];
+  }
+
+  function prizeById(id){ return PRIZES.find(p => p.id === id); }
+
+  function renderPrizeGrid(){
+    els.prizeGrid.innerHTML = PRIZES.map(p => `
+      <div class="prize-item tier-${p.tier}">
+        <span class="p-icon">${p.icon}</span>
+        <span class="p-name">${p.name}</span>
+        <span class="p-cost">${p.cost ? '⭐ ' + p.cost : 'NFT'}</span>
+      </div>`).join('');
+  }
+
+  function sellValue(prize){
+    const base = prize.cost || NFT_BASE_VALUE;
+    return Math.round(base * SELL_RATE);
+  }
+
+  function showToast(message){
+    els.toast.textContent = message;
+    els.toast.classList.add('show');
+    clearTimeout(showToast._t);
+    showToast._t = setTimeout(() => els.toast.classList.remove('show'), 2600);
+  }
+
+  function renderInventory(){
+    els.invCount.textContent = inventory.length + (inventory.length === 1 ? ' гифт' : ' гифтов');
+    if(inventory.length === 0){
+      els.inventoryList.innerHTML = '<span class="inventory-empty">Здесь появятся гифты, выигранные в обычном режиме — их можно продать за звёзды или вывести</span>';
+      return;
+    }
+    els.inventoryList.innerHTML = inventory.slice().reverse().map(item => {
+      const p = prizeById(item.prizeId);
+      return `
+        <div class="inventory-row tier-${p.tier}" data-inv-id="${item.invId}">
+          <span class="inv-icon">${p.icon}</span>
+          <div class="inv-info">
+            <div class="inv-name">${p.name}</div>
+            <div class="inv-value">продажа ⭐ ${sellValue(p)}</div>
+          </div>
+          <div class="inv-actions">
+            <button class="inv-btn sell" data-action="sell">Продать</button>
+            <button class="inv-btn withdraw" data-action="withdraw">Вывести</button>
+          </div>
+        </div>`;
+    }).join('');
+  }
+
+  els.inventoryList.addEventListener('click', (e) => {
+    const btn = e.target.closest('.inv-btn');
+    if(!btn) return;
+    const row = e.target.closest('.inventory-row');
+    const invId = Number(row.dataset.invId);
+    const idx = inventory.findIndex(i => i.invId === invId);
+    if(idx === -1) return;
+    const item = inventory[idx];
+    const p = prizeById(item.prizeId);
+
+    if(btn.dataset.action === 'sell'){
+      const value = sellValue(p);
+      balance += value;
+      updateBalanceDisplay();
+      flashBalance('up');
+      inventory.splice(idx, 1);
+      renderInventory();
+      updateSpinButtonState();
+      showToast(`Продано: ${p.name} (+⭐ ${value})`);
+    } else if(btn.dataset.action === 'withdraw'){
+      inventory.splice(idx, 1);
+      renderInventory();
+      showToast(`«${p.name}» поставлен на вывод в Telegram (демо)`);
+    }
+  });
+
+  function flashBalance(dir){
+    els.balance.classList.remove('flash-up','flash-down');
+    void els.balance.offsetWidth;
+    els.balance.classList.add(dir === 'up' ? 'flash-up' : 'flash-down');
+  }
+
+  function updateBalanceDisplay(){
+    els.balance.textContent = balance;
+  }
+
+  function updateSpinButtonState(){
+    if(spinning){ els.spinBtn.disabled = true; return; }
+    if(isDemo){
+      els.spinBtn.disabled = false;
+      els.spinCostLabel.textContent = 'бесплатно';
+    } else {
+      els.spinCostLabel.textContent = '⭐ ' + SPIN_COST;
+      els.spinBtn.disabled = balance < SPIN_COST;
+    }
+  }
+
+  function buildReel(targetId){
+    els.reelTrack.style.transition = 'none';
+    els.reelTrack.style.transform = 'translateX(0px)';
+    els.reelTrack.innerHTML = '';
+    const weights = currentWeights();
+    const sequenceLength = 44;
+    const targetIndex = 36;
+    const ids = [];
+    for(let i=0;i<sequenceLength;i++){
+      ids.push(i === targetIndex ? targetId : weightedPick(weights));
+    }
+    ids.forEach(id => {
+      const p = prizeById(id);
+      const card = document.createElement('div');
+      card.className = 'reel-card tier-' + p.tier;
+      card.innerHTML = `<div class="reel-icon">${p.icon}</div><div class="reel-cost">${p.cost ? '⭐ ' + p.cost : 'NFT'}</div>`;
+      els.reelTrack.appendChild(card);
+    });
+    return targetIndex;
+  }
+
+  function spawnConfetti(tier){
+    const count = tier === 'mythic' ? 40 : 24;
+    const emojis = tier === 'mythic' ? ['⭐','✨','🍭','💫'] : ['⭐','✨'];
+    for(let i=0;i<count;i++){
+      const piece = document.createElement('div');
+      piece.className = 'confetti-piece';
+      piece.textContent = emojis[Math.floor(Math.random()*emojis.length)];
+      piece.style.left = Math.random()*100 + 'vw';
+      const duration = 2.2 + Math.random()*1.4;
+      piece.style.animationDuration = duration + 's';
+      piece.style.fontSize = (12 + Math.random()*12) + 'px';
+      els.confettiLayer.appendChild(piece);
+      setTimeout(() => piece.remove(), duration*1000 + 100);
+    }
+  }
+
+  function addHistory(prize){
+    const empty = els.historyList.querySelector('.history-empty');
+    if(empty) empty.remove();
+    const row = document.createElement('div');
+    row.className = 'history-row tier-' + prize.tier + (isDemo ? ' demo-row' : '');
+    const now = new Date();
+    const time = now.toLocaleTimeString('ru-RU', { hour:'2-digit', minute:'2-digit' });
+    row.innerHTML = `
+      <span class="h-icon">${prize.icon}</span>
+      <span class="h-name">${prize.name}</span>
+      <span class="h-cost">${prize.cost ? '⭐ ' + prize.cost : 'NFT'}</span>
+      <span class="h-time">${time}</span>
+    `;
+    els.historyList.prepend(row);
+    const rows = els.historyList.querySelectorAll('.history-row');
+    if(rows.length > 30) rows[rows.length - 1].remove();
+  }
+
+  function showResultBanner(prize){
+    const tierWord = { common:'', uncommon:'', rare:'Редкий приз!', epic:'Эпический приз!', mythic:'МИФИЧЕСКИЙ ВЫИГРЫШ!' }[prize.tier];
+    els.resultBanner.innerHTML = `🎉 Выпало: <strong>${prize.name}</strong> ${prize.cost ? '(⭐ ' + prize.cost + ')' : '(NFT)'} ${tierWord ? '— ' + tierWord : ''}`;
+    els.resultBanner.style.color = prize.tier === 'mythic' ? 'var(--gold-2)' : 'var(--text)';
+    els.resultBanner.classList.add('show');
+    clearTimeout(showResultBanner._t);
+    showResultBanner._t = setTimeout(() => els.resultBanner.classList.remove('show'), 3800);
+  }
+
+  function spin(){
+    if(spinning) return;
+
+    if(!isDemo && balance < SPIN_COST){
+      els.spinBtn.classList.add('shake');
+      setTimeout(() => els.spinBtn.classList.remove('shake'), 400);
+      return;
+    }
+
+    spinning = true;
+    updateSpinButtonState();
+    els.demoToggle.disabled = true;
+
+    if(!isDemo){
+      balance -= SPIN_COST;
+      updateBalanceDisplay();
+      flashBalance('down');
+    }
+
+    const winnerId = weightedPick(currentWeights());
+    const winner = prizeById(winnerId);
+    const targetIndex = buildReel(winnerId);
+
+    // force reflow before animating
+    void els.reelTrack.offsetHeight;
+
+    const viewportWidth = els.reelViewport.clientWidth;
+    const centerOffset = targetIndex * CARD_FULL + CARD_FULL / 2 - viewportWidth / 2;
+    const jitter = (Math.random() - 0.5) * CARD_FULL * 0.4;
+    const finalOffset = centerOffset + jitter;
+
+    els.reelTrack.style.transition = 'transform 4.6s cubic-bezier(0.1,0.7,0.15,1)';
+    els.reelTrack.style.transform = `translateX(-${finalOffset}px)`;
+
+    const onEnd = () => {
+      els.reelTrack.removeEventListener('transitionend', onEnd);
+      const targetCard = els.reelTrack.children[targetIndex];
+      if(targetCard){
+        targetCard.classList.add('win-pulse');
+        setTimeout(() => targetCard.classList.remove('win-pulse'), 900);
+      }
+      addHistory(winner);
+      showResultBanner(winner);
+      if(!isDemo){
+        inventory.push({ invId: nextInvId++, prizeId: winner.id, ts: Date.now() });
+        renderInventory();
+      }
+      if(winner.tier === 'epic' || winner.tier === 'mythic'){
+        spawnConfetti(winner.tier);
+      }
+      spinning = false;
+      els.demoToggle.disabled = false;
+      updateSpinButtonState();
+    };
+    els.reelTrack.addEventListener('transitionend', onEnd);
+  }
+
+  els.spinBtn.addEventListener('click', spin);
+
+  els.topupBtn.addEventListener('click', () => {
+    balance += 100;
+    updateBalanceDisplay();
+    flashBalance('up');
+    updateSpinButtonState();
+  });
+
+  els.demoToggle.addEventListener('change', (e) => {
+    isDemo = e.target.checked;
+    els.demoBadge.classList.toggle('hidden', !isDemo);
+    renderPrizeGrid();
+    updateSpinButtonState();
+  });
+
+  // Initial paint
+  updateBalanceDisplay();
+  renderPrizeGrid();
+  renderInventory();
+  updateSpinButtonState();
+  buildReel(weightedPick(WEIGHTS_NORMAL));
+})();
+</script>
+
+</body>
+</html>
