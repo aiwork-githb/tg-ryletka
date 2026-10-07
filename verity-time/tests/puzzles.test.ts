@@ -129,3 +129,65 @@ describe('P9 shadow theatre', () => {
     expect(shadowFlip(s, 'verity')).toBe(true);
   });
 });
+
+import { steamInit, steamToggle, steamFlow, liftPressure } from '@/puzzles/steam';
+import { musicInit, musicTune, musicPlay, musicCorrect, LULLABY, TINE_NOTES } from '@/puzzles/musicbox';
+
+describe('P10 steam board', () => {
+  it('needs the valve wheel before anything turns', () => {
+    const s = steamInit();
+    s.lit = true;
+    s.pressure = 1;
+    const before = [...s.open];
+    steamToggle(s, 1);
+    expect(s.open).toEqual(before);
+  });
+  it('initially vents to the whistle and the cold room', () => {
+    const s = steamInit();
+    s.lit = true;
+    s.pressure = 1;
+    const f = steamFlow(s);
+    expect(f.whistle).toBeGreaterThan(0);
+    expect(f.cold).toBeGreaterThan(0);
+    expect(liftPressure(s)).toBeLessThan(0.99);
+  });
+  it('the lift runs only with both pistons and nothing else open', () => {
+    const s = steamInit();
+    s.lit = true;
+    s.pressure = 1;
+    s.wheel = true;
+    steamToggle(s, 1); // liftA on
+    steamToggle(s, 5); // liftB on
+    expect(s.done).toBe(false); // whistle + cold still open
+    steamToggle(s, 2);
+    expect(s.done).toBe(false);
+    expect(steamToggle(s, 4)).toBe(true);
+    expect(liftPressure(s)).toBeCloseTo(1);
+  });
+  it('needs the boiler at full pressure', () => {
+    const s = steamInit();
+    s.wheel = true;
+    s.lit = true;
+    s.pressure = 0.5;
+    s.open = [true, true, false, true, false, true];
+    expect(steamToggle(s, 2) || steamToggle(s, 2)).toBe(false);
+  });
+});
+
+describe('P11 music box', () => {
+  it('opens only on the lullaby', () => {
+    const s = musicInit();
+    expect(musicPlay(s).open).toBe(false);
+    for (let i = 0; i < 4; i++) while (s.tines[i] !== LULLABY[i]) musicTune(s, i);
+    expect(musicCorrect(s)).toBe(4);
+    const r = musicPlay(s);
+    expect(r.open).toBe(true);
+    expect(r.notes).toEqual([79, 76, 74, 72]);
+  });
+  it('tuning wraps around the eight notes', () => {
+    const s = musicInit();
+    s.tines[0] = TINE_NOTES.length - 1;
+    expect(musicTune(s, 0)).toBe(0);
+    expect(musicTune(s, 0, -1)).toBe(TINE_NOTES.length - 1);
+  });
+});
