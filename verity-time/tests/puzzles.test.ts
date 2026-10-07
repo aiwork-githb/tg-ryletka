@@ -191,3 +191,25 @@ describe('P11 music box', () => {
     expect(musicTune(s, 0, -1)).toBe(TINE_NOTES.length - 1);
   });
 });
+
+import { heartInit, heartTime, heartWord, heartCheck, endingsAvailable, PROMISE_ANSWER } from '@/puzzles/heart';
+
+describe('P12 heart vault', () => {
+  it('needs all three answers', () => {
+    const s = heartInit();
+    s.palm = true;
+    expect(heartTime(s, 7, 0)).toBe(false);
+    expect(heartTime(s, 19, 0)).toBe(true);
+    expect(s.open).toBe(false);
+    expect(heartWord(s, 0)).toBe(false);
+    heartWord(s, PROMISE_ANSWER);
+    expect(heartCheck(s)).toBe(true);
+    expect(s.wrong).toBe(2);
+  });
+  it('the goodbye needs the tape and not a single lie', () => {
+    expect(endingsAvailable(true, 0).goodbye).toBe(true);
+    expect(endingsAvailable(true, 1).goodbye).toBe(false);
+    expect(endingsAvailable(true, 1).tapeRejected).toBe(true);
+    expect(endingsAvailable(false, 0).goodbye).toBe(false);
+  });
+});

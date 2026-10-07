@@ -7,6 +7,7 @@ import { factory } from './factory';
 import { research } from './research';
 import { playland } from './playland';
 import { oldworks } from './oldworks';
+import { core } from './core';
 
 export const ZONES: Record<string, ZoneDef> = {
   sandbox,
@@ -17,4 +18,5 @@ export const ZONES: Record<string, ZoneDef> = {
   research,
   playland,
   oldworks,
+  core,
 };

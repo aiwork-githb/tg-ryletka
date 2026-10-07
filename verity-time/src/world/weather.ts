@@ -3,11 +3,12 @@ import type { Game } from '../Game';
 import type { LevelBuilder } from './LevelBuilder';
 
 /** Night sky dome with slowly drifting clouds and lightning flashes. */
-export function skyDome(g: Game, b: LevelBuilder): { flash: (k: number) => void } {
+export function skyDome(g: Game, b: LevelBuilder, dawn = 0): { flash: (k: number) => void } {
   const uniforms = {
     uTime: g.mats.shared.uTime,
     uNoise: { value: g.mats.macroNoise },
     uFlash: { value: 0 },
+    uDawn: { value: dawn },
   };
   const mat = new THREE.ShaderMaterial({
     uniforms,
@@ -18,7 +19,7 @@ export function skyDome(g: Game, b: LevelBuilder): { flash: (k: number) => void 
       varying vec3 vDir;
       void main(){ vDir = normalize(position); gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }`,
     fragmentShader: /* glsl */ `
-      uniform sampler2D uNoise; uniform float uTime; uniform float uFlash;
+      uniform sampler2D uNoise; uniform float uTime; uniform float uFlash; uniform float uDawn;
       varying vec3 vDir;
       void main(){
         float h = clamp(vDir.y, -0.2, 1.0);
@@ -33,6 +34,12 @@ export function skyDome(g: Game, b: LevelBuilder): { flash: (k: number) => void 
         // city glow on the horizon
         col += vec3(0.05, 0.028, 0.012) * (1.0 - smoothstep(0.0, 0.25, h)) * 0.6;
         col += vec3(0.55, 0.6, 0.75) * uFlash * (0.4 + clouds) * smoothstep(-0.1, 0.4, h);
+        // dawn: a pale, washed-out morning after the rain
+        vec3 dh = vec3(0.62, 0.45, 0.36);
+        vec3 dz = vec3(0.22, 0.30, 0.42);
+        vec3 dcol = mix(dh, dz, smoothstep(-0.05, 0.55, h));
+        dcol = mix(dcol, vec3(0.52, 0.5, 0.52), clouds * 0.55 * smoothstep(-0.05, 0.3, h));
+        col = mix(col, dcol, uDawn);
         gl_FragColor = vec4(col, 1.0);
       }`,
   });

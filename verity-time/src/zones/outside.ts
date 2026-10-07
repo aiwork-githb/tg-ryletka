@@ -7,6 +7,8 @@ import * as F from '../models/furniture';
 import * as FX from '../models/fixtures';
 import { poster, screenCanvas, photo } from '../assets/Signage';
 import { skyDome, rain, lightning } from '../world/weather';
+import { EndingScreen, type EndingId } from '../ui/screens/Ending';
+import { CreditsScreen } from '../ui/screens/Credits';
 
 const inRect = (p: THREE.Vector3, x0: number, z0: number, x1: number, z1: number) => p.x > x0 && p.x < x1 && p.z > z0 && p.z < z1;
 
@@ -29,6 +31,20 @@ export const outside: ZoneDef = {
     env.ambience = ['rain_loop', 'wind_loop'];
     env.envMap = 'night';
     env.envIntensity = 0.6;
+    const ending = g.state.get('ending.type') as EndingId | undefined;
+    if (ending) {
+      // morning after: the rain has stopped
+      env.fogColor.set(0x8a8078);
+      env.fogDensity = 0.012;
+      env.ambient.set(0x9a9088);
+      env.ambientIntensity = 0.45;
+      env.hemiSky.set(0xb8c0d0);
+      env.hemiGround.set(0x4a4038);
+      env.hemiIntensity = 0.9;
+      env.ambience = ['wind_loop'];
+      env.envMap = 'hall';
+      env.envIntensity = 0.5;
+    }
 
     // ---------------------------------------------------------------- ground
     // asphalt lot inside the fence + road outside
@@ -69,7 +85,7 @@ export const outside: ZoneDef = {
     b.solid('concrete', 0, 3.9, FZ + 2.3, 9, 0.35, 4.6, { opaque: true });
     for (const x of [-3.8, 3.8]) b.solid('brick_painted', x, 0, FZ + 4.1, 0.5, 3.9, 0.5);
     // giant clock, stopped at 19:00
-    const clock = FX.wallClock(m, 19, 0, 0.17);
+    const clock = FX.wallClock(m, 19, ending === 'goodbye' ? 1 : 0, 0.17);
     b.prop(clock, 0, 9.4, FZ + 0.02, 0, { collide: false, scale: 9 });
     // neon roof sign (dead, flickers once)
     const neon = O.facadeSign(m, 'ВРЕМЯ ВЕРИТИ', 0);
@@ -209,12 +225,13 @@ export const outside: ZoneDef = {
     b.collider(30, 0, -31, 31, 4, 23, { opaque: false });
 
     // ---------------------------------------------------------------- weather
-    const moon = new THREE.DirectionalLight(0x8fa6c8, 0.3);
-    moon.position.set(-20, 40, 10);
+    const moon = new THREE.DirectionalLight(ending ? 0xffd8b0 : 0x8fa6c8, ending ? 1.4 : 0.3);
+    moon.position.set(ending ? 30 : -20, ending ? 18 : 40, ending ? 30 : 10);
     b.addDynamic(moon);
-    const sky = skyDome(g, b);
-    rain(g, b, 2600, (p) => !inRect(p, BX - 1.3, BZ - 1.2, BX + 1.3, BZ + 1.2) && !inRect(p, -4.5, -30, 4.5, -25.5) && p.z > -30);
-    const bolt = lightning(g, b, sky, moon);
+    const sky = skyDome(g, b, ending ? 1 : 0);
+    if (!ending) rain(g, b, 2600, (p) => !inRect(p, BX - 1.3, BZ - 1.2, BX + 1.3, BZ + 1.2) && !inRect(p, -4.5, -30, 4.5, -25.5) && p.z > -30);
+    const bolt = ending ? { strike: () => {} } : lightning(g, b, sky, moon);
+    if (ending) epilogue(g, b, ending, BX, BZ);
 
     // the neon sign comes alive for a moment when you pass under the arch
     b.trigger('neon', -4, 0, -17, 4, 4, -15, {
@@ -238,9 +255,14 @@ export const outside: ZoneDef = {
     });
 
     b.spawn('start', 4.1, 0, 14.2, 0.15);
+    b.spawn('epilogue', 0, 0, -24, Math.PI);
   },
-  onEnter(g, _spawn, restored) {
+  onEnter(g, spawn, restored) {
     if (restored) return;
+    if (spawn === 'epilogue') {
+      g.co.start(epilogueIntro(g), 'zone');
+      return;
+    }
     if (!g.state.is('outside.intro')) {
       g.state.set('outside.intro');
       g.giveItem('friend_card', true);
@@ -300,4 +322,76 @@ function photoCat(): HTMLCanvasElement {
   x.font = "16px 'Caveat', cursive";
   x.fillText('Бублик. Ждёт дома', 12, 228);
   return c;
+}
+
+// =====================================================================
+// epilogue: the morning after
+// =====================================================================
+
+function epilogue(g: import('../Game').Game, b: import('../world/LevelBuilder').LevelBuilder, ending: EndingId, BX: number, BZ: number): void {
+  if (ending === 'shutdown') {
+    // a yellow ball by the gate; its star blinks once
+    const star = new THREE.MeshStandardMaterial({ color: 0x332200, emissive: 0xffd84a, emissiveIntensity: 0 });
+    const ball = new THREE.Group();
+    const body = new THREE.Mesh(new THREE.SphereGeometry(0.2, 20, 14), g.mats.plastic('#e8c65a', 0.6));
+    body.position.y = 0.2;
+    const st = new THREE.Mesh(new THREE.SphereGeometry(0.04, 8, 6), star);
+    st.position.y = 0.46;
+    ball.add(body, st);
+    b.prop(ball, -1.8, 0, -14, 0.4, { collide: false, static: false });
+    let blinked = false;
+    b.update(() => {
+      if (blinked || g.player.pos.distanceTo(ball.position) > 5) return;
+      blinked = true;
+      star.emissiveIntensity = 3;
+      g.music.note(76, { pos: ball.position, volume: 0.3, broken: true });
+      setTimeout(() => (star.emissiveIntensity = 0), 450);
+    });
+  }
+  if (ending === 'goodbye') {
+    b.trigger('ep_intercom', BX - 4, 0, BZ - 4, BX + 4, 3, BZ + 4, {
+      onEnter: () => {
+        g.audio.play('static_burst', { pos: new THREE.Vector3(BX, 1.5, BZ), volume: 0.4 });
+        setTimeout(() => g.say('nadia', 'Пост номер один. Слушаю.', { pos: new THREE.Vector3(BX, 1.5, BZ) }), 700);
+      },
+    });
+  }
+  if (ending === 'release') {
+    b.trigger('ep_radio', -2, 0, 4, 7, 3, 16, {
+      onEnter: () => {
+        g.music.play('ad', { volume: 0.35, loop: true });
+        setTimeout(() => g.ui.hud.notify('Новое сообщение: «Привет. Я тебя нашёл.»', 'info'), 2500);
+      },
+    });
+  }
+  b.trigger('ep_car', 0.5, 0, 11.5, 4.5, 3, 14.5, {
+    onEnter: () => {
+      g.player.movementLocked = true;
+      g.music.stop(2);
+      g.mode = 'ending';
+      g.fadeOut(2.5).then(() => {
+        g.input.exitLock();
+        g.ui.open(
+          new EndingScreen(g, ending, () => {
+            g.ui.closeAll();
+            g.ui.open(new CreditsScreen(g, () => g.toMenu()));
+          }),
+        );
+      });
+    },
+  });
+}
+
+function* epilogueIntro(g: import('../Game').Game): CoGen {
+  const ending = g.state.get('ending.type') as EndingId;
+  yield g.fadeIn(3);
+  g.ui.hud.chapterCard('Эпилог', 'Утро', 5);
+  yield 4;
+  const lines: Record<EndingId, string> = {
+    shutdown: 'Дождь кончился. Над входом мёртвая вывеска. Тихо так, будто здания уже нет.',
+    release: 'Дождь кончился. В кармане завибрировал телефон. Потом ещё раз. И ещё.',
+    goodbye: 'Дождь кончился. Часы над входом показывают 19:01. Они идут.',
+  };
+  g.ui.hud.subtitle(lines[ending], 6);
+  g.objective('Вернуться к машине');
 }
