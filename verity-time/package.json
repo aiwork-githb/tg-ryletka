@@ -1,0 +1,36 @@
+{
+  "name": "verity-time",
+  "version": "0.1.0",
+  "private": true,
+  "description": "VERITY TIME — psychological first-person horror adventure",
+  "type": "module",
+  "main": "electron/main.cjs",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "build:debug": "tsc --noEmit && vite build --mode debug",
+    "preview": "vite preview --port 4173",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "shot": "node tools/shot.mjs",
+    "qa": "node tools/qa-playthrough.mjs",
+    "electron": "electron .",
+    "package:win": "node tools/package.mjs win32",
+    "package:linux": "node tools/package.mjs linux"
+  },
+  "dependencies": {
+    "@fontsource/caveat": "^5.3.0",
+    "@fontsource/comfortaa": "^5.3.0",
+    "@fontsource/ibm-plex-mono": "^5.3.0",
+    "@fontsource/ibm-plex-sans": "^5.3.0",
+    "three": "^0.186.1"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.4",
+    "@types/three": "^0.186.0",
+    "playwright-core": "1.56",
+    "typescript": "5.9",
+    "vite": "^8.3.3",
+    "vitest": "^5.0.3"
+  }
+}
