@@ -455,7 +455,7 @@ const diamondPlate: Recipe = (s, p) => {
   s.cavityDirt(0.6);
   s.grime((p.wear ?? 0.5) * 0.8, 3, [0.14, 0.11, 0.08]);
   const rustMask = s.noise(4, 5, 77);
-  for (let i = 0; i < s.n; i++) rustMask[i] = smoothstep(0.7 - (p.wear ?? 0.5) * 0.2, 0.85, rustMask[i]) * (1 - m[i] * 0.5);
+  for (let i = 0; i < s.n; i++) rustMask[i] = smoothstep(0.8 - (p.wear ?? 0.5) * 0.1, 0.92, rustMask[i]) * (1 - m[i] * 0.5);
   s.paint(rustMask, [0.45, 0.22, 0.1], 0.8, 0.85, 0.2);
 };
 

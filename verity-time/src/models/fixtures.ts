@@ -62,7 +62,7 @@ export function cageLamp(m: Materials, color = '#ffcf8a'): LampModel {
   const b = new ModelBuilder();
   const base = m.painted('#3b3f3a', 0.6);
   b.add(cyl(0.09, 0.1, 0.05, 16), base, 0, 0, 0.025, Math.PI / 2);
-  const bulb = bulbMat(color, 3);
+  const bulb = bulbMat(color, 1.4);
   b.add(sphere(0.07, 14, 10), bulb, 0, 0, 0.1).castShadow = false;
   const wire = m.steel('#2a2a2a', 0.5);
   for (let i = 0; i < 6; i++) {
