@@ -23,12 +23,12 @@ async function start(): Promise<void> {
     ),
   );
   const qs = new URLSearchParams(location.search);
-  if (qs.has('modelview')) {
+  if (__DEBUG__ && qs.has('modelview')) {
     const { modelView } = await import('./debug/ModelView');
     modelView(qs.get('modelview') || 'verity');
     return;
   }
-  if (qs.has('texdebug')) {
+  if (__DEBUG__ && qs.has('texdebug')) {
     const { texView } = await import('./debug/TexView');
     texView(qs.get('texdebug') || undefined);
     return;

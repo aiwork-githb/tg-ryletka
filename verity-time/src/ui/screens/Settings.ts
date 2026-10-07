@@ -116,7 +116,7 @@ export class SettingsScreen implements Screen {
           s.renderScale = v;
           this.changed(true);
         }),
-        this.check('Вертикальная синхронизация', s.vsync, (v) => {
+        this.check(window.native ? 'Вертикальная синхронизация (после перезапуска)' : 'Вертикальная синхронизация', s.vsync, (v) => {
           s.vsync = v;
           this.changed();
         }),

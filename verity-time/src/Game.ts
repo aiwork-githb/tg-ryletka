@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { EventBus, type GameEvents } from './core/EventBus';
 import { Coroutines, type CoGen } from './core/Coroutines';
 import { Input } from './core/Input';
-import { loadSettings, saveSettings, type Settings } from './core/Settings';
+import { applyPreset, loadSettings, saveSettings, type Settings } from './core/Settings';
 import { GameState, type GameStateData } from './core/GameState';
 import { SaveSystem, type SlotId } from './core/SaveSystem';
 import { Renderer } from './render/Renderer';
@@ -161,15 +161,18 @@ export class Game {
     });
     this.bus.on('fear', ({ amount }) => this.addFear(amount));
 
-    if (__DEBUG__ || this.params.has('debug')) this.debug = new Debug(this);
-    (window as any).__VT = this;
+    // debug tools, test URLs and the console handle exist only in debug builds
+    if (__DEBUG__) {
+      this.debug = new Debug(this);
+      (window as any).__VT = this;
+    }
   }
 
   // ===================================================================== flow
 
   async boot(): Promise<void> {
     await document.fonts.ready;
-    const zoneParam = this.params.get('zone');
+    const zoneParam = __DEBUG__ ? this.params.get('zone') : null;
     if (zoneParam && ZONES[zoneParam]) {
       // direct start for testing / QA
       this.state.reset();
@@ -228,6 +231,7 @@ export class Game {
     this.handleGlobalKeys();
     const playing = (this.mode === 'play' || this.mode === 'cutscene') && !this.ui.pausing;
     const sdt = dt * this.timeScale;
+    if (playing && !this.qa) this.autoTune(dt);
     if (playing) {
       this.time += sdt;
       this.state.data.playTime += dt;
@@ -267,6 +271,31 @@ export class Game {
     this.debug?.update(dt);
     if (render) this.renderer.render(dt);
     this.input.endFrame();
+  }
+
+  private tune = { t: 0, frames: 0, acc: 0 };
+  /** First run only: if the machine can't hold ~40 fps, step the preset down once or twice. */
+  private autoTune(dt: number): void {
+    const s = this.settings;
+    if (s.autoTuned || s.preset === 'custom') return;
+    const tu = this.tune;
+    tu.t += dt;
+    if (tu.t < 4) return; // let shaders and textures settle
+    tu.frames++;
+    tu.acc += dt;
+    if (tu.acc < 8) return;
+    const fps = tu.frames / tu.acc;
+    tu.frames = 0;
+    tu.acc = 0;
+    const order: Array<'ultra' | 'high' | 'medium' | 'low'> = ['ultra', 'high', 'medium', 'low'];
+    const i = order.indexOf(s.preset as 'ultra');
+    if (fps < 40 && i >= 0 && i < order.length - 1) {
+      applyPreset(s, order[i + 1]);
+      this.applySettings();
+      this.ui.hud.notify(`Качество графики снижено до «${{ ultra: 'ультра', high: 'высокое', medium: 'среднее', low: 'низкое' }[order[i + 1]]}» (${Math.round(fps)} FPS). Можно изменить в настройках.`, 'info');
+      if (fps >= 30 || order[i + 1] === 'low') s.autoTuned = true;
+    } else s.autoTuned = true;
+    saveSettings(s);
   }
 
   private handleGlobalKeys(): void {
@@ -774,9 +803,14 @@ export class Game {
   }
 
   async retry(): Promise<void> {
+    // deaths and play time belong to the run, not to the checkpoint
+    const deaths = this.state.data.deaths;
+    const playTime = this.state.data.playTime;
     const f = this.saves.read('auto');
     if (f) await this.restore(f.state);
     else await this.newGame();
+    this.state.data.deaths = Math.max(this.state.data.deaths, deaths);
+    this.state.data.playTime = Math.max(this.state.data.playTime, playTime);
   }
 
   quit(): void {

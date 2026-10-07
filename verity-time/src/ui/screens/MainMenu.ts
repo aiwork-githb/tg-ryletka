@@ -67,7 +67,7 @@ export class MainMenu implements Screen {
         h('div', { class: 'tagline' }, 'твой друг навсегда'),
         list,
       ),
-      h('div', { class: 'menu-foot' }, 'v0.9 · Клавиатура и мышь · Наушники рекомендуются'),
+      h('div', { class: 'menu-foot' }, 'v1.0 · Клавиатура и мышь · Наушники рекомендуются'),
     );
   }
 }

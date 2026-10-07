@@ -32,6 +32,8 @@ export interface Settings {
   headBob: boolean;
   reduceFlashing: boolean;
   showFps: boolean;
+  /** First-run frame-time check has run (the preset may have been lowered). */
+  autoTuned: boolean;
   bindings: Record<Action, string[]>;
 }
 
@@ -66,6 +68,7 @@ export function defaultSettings(): Settings {
     headBob: true,
     reduceFlashing: false,
     showFps: false,
+    autoTuned: false,
     bindings: structuredClone(DEFAULT_BINDINGS),
   };
 }
