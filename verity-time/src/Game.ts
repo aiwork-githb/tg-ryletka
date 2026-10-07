@@ -76,6 +76,8 @@ export class Game {
   time = 0;
   timeScale = 1;
   fear = 0;
+  /** Set by automated QA runs: no auto-pause on pointer-lock loss. */
+  qa = false;
   /** Cutscene / scripted control flag (disables saving and the pause menu UI). */
   scripted = 0;
   canSave = true;
@@ -135,7 +137,7 @@ export class Game {
     this.player.surfaceAt = (c) => this.zone?.surfaceOf(c?.tag) ?? 'concrete';
 
     this.input.onLockChange = (locked) => {
-      if (!locked && this.mode === 'play' && !this.ui.open_ && !this.ui.pausing) this.openPause();
+      if (!locked && this.mode === 'play' && !this.ui.open_ && !this.ui.pausing && !this.qa) this.openPause();
       if (locked) this.ui.showResume(false);
     };
     window.addEventListener('resize', () => this.renderer.resize());

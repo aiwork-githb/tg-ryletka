@@ -632,9 +632,11 @@ export function sign(text: string, o: SignOpts = {}): HTMLCanvasElement {
   }
   g.fillStyle = o.fg ?? '#f6efe0';
   const fam = o.font === 'brand' ? BRAND : o.font === 'mono' ? MONO : UI;
-  let size = h * (o.sub ? 0.38 : 0.48);
+  const lines = text.split('\n');
+  let size = Math.min(h * (o.sub ? 0.38 : 0.48), (h * 0.8) / (lines.length * 1.15));
   g.font = `700 ${size}px ${fam}`;
-  while (g.measureText(text).width > w * 0.82 && size > 8) {
+  const widest = () => Math.max(...lines.map((l) => g.measureText(l).width));
+  while (widest() > w * 0.82 && size > 8) {
     size *= 0.92;
     g.font = `700 ${size}px ${fam}`;
   }
@@ -676,7 +678,10 @@ export function sign(text: string, o: SignOpts = {}): HTMLCanvasElement {
     g.restore();
     tx = o.icon === 'arrow-right' ? (w - h) / 2 : (w + h) / 2;
   }
-  g.fillText(text, tx, o.sub ? h * 0.4 : h / 2);
+  if (lines.length > 1) {
+    const lh = size * 1.15;
+    lines.forEach((l, i) => g.fillText(l, tx, h / 2 + (i - (lines.length - 1) / 2) * lh));
+  } else g.fillText(text, tx, o.sub ? h * 0.4 : h / 2);
   if (o.sub) {
     g.font = `400 ${h * 0.2}px ${fam}`;
     g.globalAlpha = 0.8;
@@ -989,10 +994,15 @@ export function scrawl(text: string, o: { w?: number; h?: number; color?: string
   g.save();
   g.translate(w / 2, h / 2);
   g.rotate(o.rot ?? -0.03);
-  g.globalAlpha = 0.9;
-  g.fillText(text, 0, 0);
-  g.globalAlpha = 0.35;
-  g.fillText(text, 2, 2);
+  const lines = text.split('\n');
+  const lh = (o.size ?? h * 0.55) * 1.1;
+  lines.forEach((l, i) => {
+    const y = (i - (lines.length - 1) / 2) * lh;
+    g.globalAlpha = 0.9;
+    g.fillText(l, 0, y);
+    g.globalAlpha = 0.35;
+    g.fillText(l, 2, y + 2);
+  });
   g.restore();
   return c;
 }

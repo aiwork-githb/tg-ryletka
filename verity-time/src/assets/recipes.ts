@@ -239,10 +239,10 @@ const plaster: Recipe = (s, p) => {
     const crack = img(s.size, s.size);
     for (let i = 0; i < s.n; i++) {
       const e = w.f2[i] - w.f1[i];
-      crack[i] = smoothstep(0.018, 0.0, e) * smoothstep(0.66, 0.82, n2[i]);
+      crack[i] = smoothstep(0.011, 0.0, e) * smoothstep(0.7, 0.86, n2[i]);
     }
-    s.paint(crack, [0.32, 0.3, 0.27], 0.55);
-    for (let i = 0; i < s.n; i++) s.height[i] -= crack[i] * 0.25;
+    s.paint(crack, [0.32, 0.3, 0.27], 0.32);
+    for (let i = 0; i < s.n; i++) s.height[i] -= crack[i] * 0.14;
   }
   s.chips(0.86 - wear * 0.06, [0.6, 0.58, 0.55], 0.95, 0, 501, 18);
   s.streaks(wear * 0.45, [0.38, 0.32, 0.22], 7);
