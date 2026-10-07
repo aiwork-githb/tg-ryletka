@@ -133,6 +133,12 @@ export class ModelBuilder {
     sy = 1,
     sz = 1,
   ): THREE.Mesh {
+    // registry materials carry their own texel density: re-project to match
+    const t = (mat as THREE.Material).userData?.tile as number | undefined;
+    if (t && t !== 0.5 && geo.getAttribute('uv') && !geo.userData.uvFixed) {
+      projectUV(geo, t);
+      geo.userData.uvFixed = true;
+    }
     const m = new THREE.Mesh(geo, mat);
     m.position.set(x, y, z);
     m.rotation.set(rx, ry, rz);

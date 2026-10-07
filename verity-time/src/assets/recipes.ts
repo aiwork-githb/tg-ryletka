@@ -829,7 +829,74 @@ const glass: Recipe = (s, p) => {
   s.scratches(60 * wear, 0.1, [1, 1, 1], -0.01);
 };
 
+/** Wet cracked asphalt with aggregate and puddles. */
+const asphalt: Recipe = (s, p) => {
+  const N = N_(s);
+  s.fill(hex(p.color ?? '#2e2f31'), 0.8, 0);
+  const agg = s.worley(N / 5, 1);
+  for (let i = 0; i < s.n; i++) {
+    const a = smoothstep(0.32, 0.12, agg.f1[i]);
+    const k = 1 + (agg.id[i] - 0.5) * 0.5 * a;
+    s.r[i] *= k;
+    s.g[i] *= k;
+    s.b[i] *= k;
+    s.height[i] = 0.5 + a * 0.12 * agg.id[i];
+  }
+  s.vary(s.noise(4, 5, 2), 0.25);
+  // cracks
+  const w = s.worley(7, 9);
+  const cn = s.noise(8, 4, 10);
+  const crack = img(N, N);
+  for (let i = 0; i < s.n; i++) crack[i] = smoothstep(0.012, 0.0, w.f2[i] - w.f1[i]) * smoothstep(0.6, 0.78, cn[i]);
+  s.paint(crack, [0.06, 0.06, 0.06], 0.9, 0.9);
+  for (let i = 0; i < s.n; i++) s.height[i] -= crack[i] * 0.35;
+  // puddles: dark, mirror-like, flat
+  const pd = s.noise(3, 5, 20);
+  const wet = p.wear ?? 0.6;
+  for (let i = 0; i < s.n; i++) {
+    const m = smoothstep(0.62 - wet * 0.1, 0.68 - wet * 0.1, pd[i]);
+    s.rough[i] = s.rough[i] * (1 - m) + 0.1 * m;
+    const dk = 1 - m * 0.2;
+    s.r[i] *= dk;
+    s.g[i] *= dk;
+    s.b[i] *= dk;
+    s.height[i] = s.height[i] * (1 - m) + 0.45 * m;
+  }
+  s.roughVary(s.noise(16, 3, 21), 0.15 * wet);
+};
+
+/** Muddy dead grass / soil. */
+const deadGrass: Recipe = (s, p) => {
+  const N = N_(s);
+  s.fill(hex(p.color ?? '#5a5236'), 0.95, 0);
+  s.vary(s.noise(4, 5, 1), 0.35);
+  s.tint(s.noise(6, 4, 2), [0.08, 0.1, -0.02], 1);
+  const blades = canvasMask(N, (ctx) => {
+    const r = new Rng(s.seed + 4);
+    ctx.lineCap = 'round';
+    for (let k = 0; k < N * 6; k++) {
+      const x = r.range(0, N);
+      const y = r.range(0, N);
+      const a = r.range(-0.6, 0.6) - Math.PI / 2;
+      const l = r.range(N * 0.01, N * 0.04);
+      ctx.globalAlpha = r.range(0.3, 1);
+      ctx.lineWidth = r.range(0.6, 1.6);
+      ctx.beginPath();
+      ctx.moveTo(x, y);
+      ctx.lineTo(x + Math.cos(a) * l, y + Math.sin(a) * l);
+      ctx.stroke();
+    }
+  });
+  s.paint(blades, [0.55, 0.5, 0.3], 0.55);
+  s.addHeight(blades, 0.3);
+  const mud = s.noise(3, 5, 7);
+  for (let i = 0; i < s.n; i++) mud[i] = smoothstep(0.55, 0.75, mud[i]);
+  s.paint(mud, [0.2, 0.16, 0.11], 0.8, 0.35);
+};
+
 export const RECIPES: Record<string, Recipe> = {
+  asphalt,
+  deadGrass,
   terrazzo,
   checker,
   carpet,

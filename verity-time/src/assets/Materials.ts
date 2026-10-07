@@ -78,6 +78,8 @@ export const MAT_DEFS: Record<string, MatDef> = {
   grate: { recipe: 'grate', tile: 1, side: THREE.DoubleSide },
   stone_old: { recipe: 'stone', tile: 3, params: { wear: 0.75 }, macro: 0.9, normalScale: 1.4 },
   rubber: { recipe: 'rubber', tile: 1 },
+  asphalt: { recipe: 'asphalt', tile: 4, params: { wear: 0.6 }, macro: 0.9 },
+  dead_grass: { recipe: 'deadGrass', tile: 3, macro: 1 },
   glass: { recipe: 'glass', tile: 1.5, physical: true, transparent: true, opacity: 0.25, envIntensity: 1 },
   glass_dirty: { recipe: 'glass', tile: 1.5, params: { wear: 1, color: '#8a9a8c' }, physical: true, transparent: true, opacity: 0.45 },
 };

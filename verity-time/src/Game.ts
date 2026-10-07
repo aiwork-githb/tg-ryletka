@@ -22,6 +22,7 @@ import { ZONES } from './zones';
 import { SPEAKERS } from './narrative/types';
 import { DOCS, LOGS, ITEMS, SECRETS } from './narrative/registry';
 import { NavGrid } from './ai/NavGrid';
+import { buildEnvMap, ENV_PRESETS } from './render/EnvMap';
 import { Verity } from './ai/Verity';
 import { Director } from './ai/Director';
 import { Carry } from './player/Carry';
@@ -484,8 +485,17 @@ export class Game {
     if (!this.input.locked) setTimeout(() => this.afterUiClose(), 300);
   }
 
+  private envCache = new Map<string, THREE.Texture>();
+
   applyEnv(z: Zone): void {
     const e = z.env;
+    let env = this.envCache.get(e.envMap);
+    if (!env) {
+      env = buildEnvMap(this.renderer.gl, ENV_PRESETS[e.envMap] ?? ENV_PRESETS.hall);
+      this.envCache.set(e.envMap, env);
+    }
+    this.renderer.scene.environment = env;
+    this.renderer.scene.environmentIntensity = e.envIntensity;
     const fog = this.renderer.scene.fog as THREE.FogExp2;
     fog.color.copy(e.fogColor);
     fog.density = e.fogDensity;
@@ -677,7 +687,7 @@ export class Game {
     const fx = this.renderer.fx;
     fx.grain = 0.05 + this.fear * 0.08;
     fx.vignette = 0.42 + this.fear * 0.3 + (this.player.hidden ? 0.25 : 0);
-    fx.aberration = 0.0012 + this.fear * 0.0025;
+    fx.aberration = 0.0005 + this.fear * 0.0025;
     fx.saturation = 1 - this.fear * 0.25;
     // heartbeat
     if (this.fear > 0.45 && !this.heartbeat) {

@@ -52,6 +52,9 @@ export interface ZoneEnv {
   hemiIntensity: number;
   reverb: string;
   ambience: string[];
+  /** Image-based lighting preset (render/EnvMap.ts) and strength. */
+  envMap: string;
+  envIntensity: number;
 }
 
 /** Runtime representation of a built zone. */
@@ -75,6 +78,8 @@ export class Zone {
     hemiIntensity: 0.25,
     reverb: 'room',
     ambience: ['room_loop'],
+    envMap: 'hall',
+    envIntensity: 0.35,
   };
   private currentCell: Cell | null = null;
   bounds = new THREE.Box3();
