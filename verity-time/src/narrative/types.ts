@@ -51,6 +51,7 @@ export const SPEAKERS: Record<string, { name: string; color: string; voice: stri
   marc: { name: 'Марк Дюваль', color: '#a7c4a0', voice: 'male' },
   pa: { name: 'Динамик', color: '#bbbbbb', voice: 'pa' },
   child: { name: 'Ребёнок', color: '#ffd1dc', voice: 'child' },
+  mother: { name: 'Мама Лизы', color: '#e8b4c8', voice: 'female' },
   player: { name: 'Вы', color: '#ffffff', voice: 'male' },
   ad: { name: 'Реклама', color: '#f6d365', voice: 'pa' },
 };

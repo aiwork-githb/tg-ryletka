@@ -23,6 +23,10 @@ export interface DoorLike {
   /** AI is allowed to force it open. */
   aiPassable: boolean;
   open(byAI?: boolean): void;
+  /** Bolted from the inside: Verity has to break it. */
+  bolted?: boolean;
+  shake?(): void;
+  bash?(from: THREE.Vector3): void;
 }
 
 export interface HideLike {
@@ -81,6 +85,8 @@ export class Verity {
   private searchPoints: THREE.Vector3[] = [];
   private stepSign = 1;
   private doorWait = 0;
+  private bashDoor: DoorLike | null = null;
+  private bashT = 0;
   private stalkFreeze = 0;
   private footT = 0;
   private rollSound: import('../audio/AudioEngine').Sound | null = null;
@@ -521,6 +527,22 @@ export class Verity {
     if (this.doorWait > 0) {
       this.doorWait -= dt;
       this.speed = 0;
+      const bd = this.bashDoor;
+      if (bd) {
+        this.bashT -= dt;
+        if (this.bashT <= 0 && this.doorWait > 0.3) {
+          this.bashT = 1.05;
+          bd.shake?.();
+          this.g.audio.play('impact_metal', { pos: bd.pos.clone().setY(1.1), volume: 0.9, rate: 0.6 + Math.random() * 0.1, ref: 4 });
+          this.g.audio.play('door_close', { pos: bd.pos.clone().setY(1.1), volume: 0.6, rate: 0.7 });
+          const d = bd.pos.distanceTo(this.g.player.pos);
+          this.g.player.addTrauma(Math.max(0, 0.35 - d * 0.02));
+        }
+        if (this.doorWait <= 0) {
+          bd.bash?.(this.pos);
+          this.bashDoor = null;
+        }
+      }
       return;
     }
     let target: NavPoint | null = this.path[this.pathIdx] ?? null;
@@ -537,7 +559,17 @@ export class Verity {
         target = this.path[this.pathIdx] ?? null;
       }
     }
-    // doors in the way
+    // doors in the way: bolted ones have to be broken
+    for (const d of this.doors) {
+      if (d.isOpen || !d.bolted) continue;
+      if (d.pos.distanceTo(this.pos) < 1.45 && this.desiredSpeed > 0.1) {
+        this.bashDoor = d;
+        this.bashT = 0.2;
+        this.doorWait = this.state === 'chase' ? 3.6 : 5;
+        this.speed = 0;
+        return;
+      }
+    }
     for (const d of this.doors) {
       if (d.isOpen || d.locked || !d.aiPassable) continue;
       if (d.pos.distanceTo(this.pos) < 1.3 && this.speed > 0.1) {

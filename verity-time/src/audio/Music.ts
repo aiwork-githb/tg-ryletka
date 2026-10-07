@@ -268,6 +268,27 @@ export class Music {
     });
   }
 
+  /** A single bell / music-box note (puzzles, toys). */
+  note(midi: number, opts: { pos?: THREE.Vector3; volume?: number; broken?: boolean; bell?: boolean } = {}): void {
+    const ctx = this.ctx;
+    const g = ctx.createGain();
+    g.gain.value = opts.volume ?? 0.6;
+    if (opts.pos) {
+      const p = ctx.createPanner();
+      p.panningModel = 'HRTF';
+      p.refDistance = 2;
+      p.rolloffFactor = 1;
+      p.positionX.value = opts.pos.x;
+      p.positionY.value = opts.pos.y;
+      p.positionZ.value = opts.pos.z;
+      g.connect(p).connect(this.audio.buses.sfx);
+    } else g.connect(this.audio.buses.sfx);
+    const t = ctx.currentTime + 0.01;
+    const f = mtof(midi);
+    musicBox(ctx, g, f, t, 0.55, opts.broken ? (Math.random() - 0.5) * 90 : 0, !!opts.broken);
+    if (opts.bell) celesta(ctx, g, f, t, 0.35);
+  }
+
   /** One-shot dramatic cue. */
   sting(kind: 'reveal' | 'danger' | 'sad' | 'soft'): void {
     const ctx = this.ctx;

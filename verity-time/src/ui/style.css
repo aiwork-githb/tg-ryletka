@@ -245,3 +245,20 @@ input[type='checkbox'] { accent-color: var(--verity); width: 18px; height: 18px;
 .debug button { background: #222; color: #cfc; border: 1px solid #444; margin: 2px; padding: 3px 6px; font: 11px var(--mono); cursor: pointer; }
 .debug input { background: #111; color: #cfc; border: 1px solid #444; width: 100%; font: 12px var(--mono); padding: 4px; margin-top: 6px; }
 .debug .title { color: #ff8; margin: 6px 0 2px; }
+
+/* ------------------------------------------------------------- dialogue */
+.dialogue {
+  position: absolute; left: 50%; bottom: 8vh; transform: translateX(-50%);
+  width: min(760px, 90vw); padding: 20px 26px 18px; background: var(--panel);
+  border: 1px solid var(--line); border-left: 3px solid var(--verity); font-size: 19px; line-height: 1.5;
+}
+.dlg-q { margin-bottom: 14px; }
+.dlg-q b { font-weight: 600; margin-right: 4px; }
+.dlg-options { display: flex; flex-direction: column; gap: 6px; }
+.dlg-option {
+  display: flex; align-items: center; gap: 12px; text-align: left; padding: 9px 12px; font: inherit; font-size: 17px;
+  color: var(--ink); background: rgba(255, 255, 255, 0.03); border: 1px solid transparent; cursor: pointer;
+}
+.dlg-option:hover { border-color: var(--line); background: rgba(255, 255, 255, 0.07); }
+.dlg-timer { height: 2px; margin-top: 14px; background: rgba(255, 255, 255, 0.08); }
+.dlg-timer > div { height: 100%; width: 100%; background: var(--coral); }

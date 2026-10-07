@@ -82,3 +82,50 @@ describe('P5 relay', () => {
     expect(relayInput(s, RELAY_ORDER[3])).toBe('done');
   });
 });
+
+import { carouselInit, carouselPress, carouselProgress, SONG, BELL_NOTE } from '@/puzzles/carousel';
+import { shadowInit, shadowMove, shadowFlip, SHADOW_TARGET, PUPPETS, SLOTS } from '@/puzzles/shadow';
+
+describe('P8 carousel bells', () => {
+  it('the song is Verity\'s motif E-G-C-B', () => {
+    expect(SONG.map((b) => BELL_NOTE[b])).toEqual([76, 79, 84, 83]);
+  });
+  it('accepts the song after wrong notes (rolling window)', () => {
+    const s = carouselInit();
+    for (const b of ['red', 'yellow', 'green', 'red'] as const) expect(carouselPress(s, b)).toBe('note');
+    expect(carouselProgress(s)).toBe(0);
+    carouselPress(s, 'yellow');
+    carouselPress(s, 'green');
+    expect(carouselProgress(s)).toBe(2);
+    carouselPress(s, 'purple');
+    expect(carouselPress(s, 'blue')).toBe('done');
+    expect(s.done).toBe(true);
+  });
+  it('the song in another order does not count', () => {
+    const s = carouselInit();
+    for (const b of ['yellow', 'green', 'blue', 'purple'] as const) carouselPress(s, b);
+    expect(s.done).toBe(false);
+  });
+});
+
+describe('P9 shadow theatre', () => {
+  it('starts unsolved and is solvable with moves and flips', () => {
+    const s = shadowInit();
+    expect(s.done).toBe(false);
+    for (const id of PUPPETS) {
+      let guard = 0;
+      while (s.p[id].slot !== SHADOW_TARGET[id].slot && guard++ < SLOTS) shadowMove(s, id);
+      if (s.p[id].flip !== SHADOW_TARGET[id].flip) shadowFlip(s, id);
+    }
+    expect(s.done).toBe(true);
+  });
+  it('a wrong facing keeps it locked', () => {
+    const s = shadowInit();
+    s.p.child = { ...SHADOW_TARGET.child };
+    s.p.verity = { ...SHADOW_TARGET.verity, flip: !SHADOW_TARGET.verity.flip };
+    s.p.dog = { ...SHADOW_TARGET.dog };
+    expect(shadowFlip(s, 'dog')).toBe(false);
+    shadowFlip(s, 'dog');
+    expect(shadowFlip(s, 'verity')).toBe(true);
+  });
+});

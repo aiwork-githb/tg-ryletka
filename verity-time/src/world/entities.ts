@@ -36,6 +36,8 @@ export interface DoorOpts {
   onOpen?: () => void;
   /** Player can't close it again (keeps flow simple). */
   stayOpen?: boolean;
+  /** Has a bolt the player can shoot when it is closed; Verity must break it. */
+  bolt?: boolean;
   frameColor?: string;
   color?: string;
   label?: string;
@@ -45,6 +47,8 @@ export class Door implements DoorLike {
   readonly pos: THREE.Vector3;
   isOpen = false;
   locked = false;
+  bolted = false;
+  private jitter = 0;
   aiPassable: boolean;
   readonly group = new THREE.Group();
   private leaf = new THREE.Group();
@@ -110,12 +114,14 @@ export class Door implements DoorLike {
       kind: 'door',
       prompt: () => {
         if (this.isOpen && o.stayOpen) return null;
+        if (this.bolted) return 'Заперто на засов';
         const reason = this.lockReason();
         if (reason) return reason;
         return this.isOpen ? 'Закрыть' : 'Открыть';
       },
       onUse: () => this.use(),
     });
+    if (o.bolt) this.addBolt(b, w, h);
     // initial state
     const open = o.open || g.state.is('door.' + o.id);
     if (open) this.setOpen(true, true);
@@ -220,6 +226,55 @@ export class Door implements DoorLike {
     }
   }
 
+  private addBolt(b: LevelBuilder, w: number, h: number): void {
+    const m = this.g.mats;
+    const mk = (side: number) => {
+      const mb = new ModelBuilder();
+      mb.add(box(0.2, 0.05, 0.03), m.steel('#8a8e91', 0.5), 0, 0, 0);
+      const pin = mb.add(cyl(0.012, 0.012, 0.16, 8), m.steel('#c0c4c8', 0.3), 0.02, 0, 0.02, 0, 0, Math.PI / 2);
+      mb.group.position.set(w / 2 - 0.16, 1.3 - h / 2, side * 0.04);
+      mb.group.userData.pin = pin;
+      return mb.group;
+    };
+    const parts = [mk(1), mk(-1)];
+    for (const p of parts) this.leaf.children[0].add(p);
+    const hit = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.2, 0.2), new THREE.MeshBasicMaterial({ visible: false }));
+    hit.position.set(w / 2 - 0.16, 1.3 - h / 2, 0);
+    this.leaf.children[0].add(hit);
+    const sync = () => parts.forEach((p) => ((p.userData.pin as THREE.Object3D).position.x = this.bolted ? -0.08 : 0.02));
+    this.g.interact.add({
+      id: 'bolt:' + this.o.id,
+      object: hit,
+      kind: 'use',
+      prompt: () => (this.isOpen ? null : this.bolted ? 'Отодвинуть засов' : 'Задвинуть засов'),
+      onUse: () => {
+        this.bolted = !this.bolted;
+        sync();
+        this.g.audio.play('impact_metal', { pos: this.pos.clone().setY(1.2), volume: 0.5, rate: 1.5 });
+        this.g.audio.play('switch', { pos: this.pos.clone().setY(1.2), volume: 0.5, rate: 0.7 });
+      },
+    });
+    b.update(sync);
+  }
+
+  shake(): void {
+    this.jitter = 1;
+  }
+
+  /** Forced open from the other side (bolt torn off). */
+  bash(from: THREE.Vector3): void {
+    this.bolted = false;
+    const local = this.group.worldToLocal(from.clone());
+    this.isOpen = true;
+    this.g.state.set('door.' + this.o.id, true);
+    this.target = this.slide ? 1 : (local.z > 0 ? -1 : 1) * 1.75;
+    this.updateCollider();
+    this.refreshNav();
+    this.g.audio.play('metal_slam', { pos: this.pos.clone().setY(1.2), volume: 1 });
+    this.g.audio.play('impact_metal', { pos: this.pos.clone().setY(1.2), volume: 0.8, rate: 0.5 });
+    this.g.player.addTrauma(0.35);
+  }
+
   lockReason(): string | null {
     if (this.o.key && !this.g.state.has(this.o.key) && !this.g.state.is('unlocked.' + this.o.id)) return 'Заперто';
     const r = this.o.lock?.() ?? null;
@@ -244,6 +299,10 @@ export class Door implements DoorLike {
   }
 
   use(): void {
+    if (this.bolted) {
+      this.g.audio.play('door_open', { pos: this.pos, volume: 0.4, rate: 1.4 });
+      return;
+    }
     const reason = this.lockReason();
     if (reason) {
       this.g.audio.play('door_open', { pos: this.pos, volume: 0.4, rate: 1.4 });
@@ -300,8 +359,10 @@ export class Door implements DoorLike {
   update(dt: number): void {
     const k = Math.min(1, dt * (this.slide ? 1.2 : 3.2));
     this.angle += (this.target - this.angle) * k;
+    this.jitter = Math.max(0, this.jitter - dt * 3);
+    const j = this.jitter > 0 ? Math.sin(performance.now() * 0.08) * this.jitter * 0.03 : 0;
     if (this.slide) this.leaf.position.x = this.angle * ((this.o.width ?? 1) * 0.98);
-    else this.leaf.rotation.y = this.angle;
+    else this.leaf.rotation.y = this.angle + j;
   }
 }
 
