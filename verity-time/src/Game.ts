@@ -196,6 +196,11 @@ export class Game {
     }
     requestAnimationFrame(this.loop);
     const now = performance.now();
+    if (this.qa) {
+      // automated runs drive the simulation themselves through advance()
+      this.last = now;
+      return;
+    }
     let dt = (now - this.last) / 1000;
     const cap = !this.settings.vsync && this.settings.fpsLimit > 0 ? 1 / this.settings.fpsLimit : 0;
     if (cap && dt < cap * 0.95) return;
@@ -208,7 +213,7 @@ export class Game {
   advance(sec: number, step = 1 / 30): void {
     const n = Math.ceil(sec / step);
     for (let i = 0; i < n; i++) this.frame(step, false);
-    this.renderer.render(0);
+    if (!this.qa) this.renderer.render(0);
   }
 
   /** Advances the simulation one frame (also used by the QA harness). */
@@ -460,7 +465,7 @@ export class Game {
     await new Promise((r) => setTimeout(r, 10));
     if (def.nav) {
       const n = def.nav;
-      zone.nav = new NavGrid(this.world, n.minX, n.minZ, n.maxX, n.maxZ, 0.4, n.probeY ?? 2.2);
+      zone.nav = new NavGrid(this.world, n.minX, n.minZ, n.maxX, n.maxZ, 0.4, n.probeY ?? 2.2, 0.3);
     }
     this.applyEnv(zone);
     this.startEmitters();
@@ -581,7 +586,8 @@ export class Game {
     const sp = SPEAKERS[speaker] ?? { name: speaker, color: '#fff', voice: 'male' };
     const prof = { ...(VOICES[sp.voice] ?? VOICES.male) };
     if (speaker === 'verity') prof.degrade = opts.degrade ?? this.verity.stage;
-    const now = this.audio.ctx.currentTime;
+    // queue on the game clock so pauses and fast-forward keep lines in order
+    const now = this.time;
     const startIn = Math.max(0, this.voiceQueueEnd - now);
     let dur = opts.duration ?? speechDuration(text, prof);
     if (!opts.silent) {

@@ -553,6 +553,12 @@ export function puppetModel(m: Materials, id: PuppetId): THREE.Group {
   const b = new ModelBuilder();
   const card = m.painted('#2a2420', 0.6);
   b.add(extrude(puppetShape(id), 0.006, 0.0), card, 0, 0.75, 0);
+  if (id === 'child') {
+    const head = new THREE.Shape();
+    head.absarc(0, 0, 0.11, 0, Math.PI * 2, false);
+    b.add(extrude(head, 0.006, 0), card, 0.0, 0.75 + 0.79, 0);
+    b.add(box(0.06, 0.04, 0.006), card, -0.07, 0.75 + 0.9, 0.003, 0, 0, 0.5);
+  }
   if (id === 'verity') {
     b.add(cyl(0.006, 0.006, 0.18, 4), card, 0, 1.43, 0.003);
     b.add(extrude(starShape(0.08, 0.035), 0.006, 0), card, 0, 1.55, 0);
@@ -574,6 +580,16 @@ export function drawPuppetShadow(g: CanvasRenderingContext2D, id: PuppetId, x: n
   pts.forEach((p, i) => (i ? g.lineTo(p.x, p.y) : g.moveTo(p.x, p.y)));
   g.closePath();
   g.fill();
+  if (id === 'child') {
+    g.beginPath();
+    g.arc(0, 0.79, 0.11, 0, Math.PI * 2);
+    g.fill();
+    g.save();
+    g.translate(-0.07, 0.9);
+    g.rotate(0.5);
+    g.fillRect(-0.03, -0.02, 0.06, 0.04);
+    g.restore();
+  }
   if (id === 'verity') {
     g.fillRect(-0.006, 0.6, 0.012, 0.18);
     g.beginPath();
