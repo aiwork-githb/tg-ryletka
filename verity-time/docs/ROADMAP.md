@@ -38,20 +38,20 @@ src/
 |---|-------|--------|
 | 1 | Project audit | done |
 | 2 | Architecture | done |
-| 3 | Player controller | |
-| 4 | Interaction | |
-| 5 | Save system | |
-| 6 | First environment | |
-| 7 | Puzzle system | |
-| 8 | Verity character | |
-| 9 | AI | |
-| 10 | Horror events / director | |
-| 11–16 | Zones 1–6 | |
-| 17 | Cinematics | |
-| 18 | Audio | |
-| 19 | VFX | |
-| 20–22 | Polish / optimisation / QA | |
-| 23 | Final build | |
+| 3 | Player controller (walk/sprint/crouch/jump, stamina, hiding, carry/throw) | done |
+| 4 | Interaction (doors, bolts, levers, pickups, documents, tapes, keypads, terminals) | done |
+| 5 | Save system (autosave checkpoints, 3 slots, settings) | done |
+| 6 | First environment (prologue, Act I) | done |
+| 7 | Puzzle system — 12 puzzles, logic unit-tested | done |
+| 8 | Verity character (rig, 5 degradation stages, expressions) | done |
+| 9 | AI (nav grid A*, Verity watch/guide/hunt/chase/search, Warden) | done |
+| 10 | Horror events / director | done |
+| 11–16 | Zones: outside, lobby, factory, research, playland, old works, core | done |
+| 17 | Cinematics (film reel, carousel ride, stage, endings, epilogue) | done |
+| 18 | Audio (synth SFX, formant voices, theme in 7 arrangements) | done |
+| 19 | VFX (dust, light cones, sparks, rain, lightning, glitch) | done |
+| 20–22 | Polish / optimisation / QA (scripted playthroughs per act, auto quality) | done |
+| 23 | Final build (Electron, Windows + Linux packages) | done |
 
 ## Content plan
 
@@ -60,6 +60,6 @@ src/
 | 1. Welcome Hall (lobby, gift shop, security, theatre) | I The Welcome | P1 breaker capacity, P2 birthday keypad | first sighting on stage |
 | 2. Toy Works (factory floor, paint shop, warehouse) | II The Factory | P3 conveyor routing, P4 colour mixing, P5 FriendLink relay | Verity helps; Warden stealth |
 | 3. Harmony Dept. (labs, Hale's office, archive) | III Something is wrong | P6 terminal restore, P7 archive index | the reel; "it learned to lie" |
-| 4. Verity Land (playland, carousel, nap room, friendship room) | IV The Friend | P8 carousel melody, P9 shadow theatre | Verity's questions; **Chase 1** (doors/power/hiding) |
+| 4. Playland (carousel, ball pit, shadow theatre, Theo's room, party rooms) | IV The Friend | P8 carousel melody, P9 shadow theatre | Verity's questions; **Chase 1** (doors/power/hiding) |
 | 5. Old Works (steam, flooded tunnels, Forever Room) | V Lower levels | P10 steam routing, P11 music-box tuning | **Chase 2** (routes/noise/cameras) |
-| 6. The Heart (core shaft) | VI Chase / finale | P12 heart vault (combined) | **Chase 3** (shifting architecture), 3 endings |
+| 6. The Core (shifting corridor, the Heart) | VI Chase / finale | P12 heart vault (combined) | **Chase 3** (shifting architecture), 3 endings |
