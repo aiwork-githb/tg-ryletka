@@ -142,7 +142,7 @@ button { font-family: inherit; }
 .spacer { flex: 1; }
 
 /* main menu */
-.main-menu { background: radial-gradient(ellipse at 30% 50%, rgba(0, 0, 0, 0.1), rgba(0, 0, 0, 0.85) 70%); justify-content: flex-start; padding-left: 9vw; }
+.main-menu { background: linear-gradient(90deg, rgba(0, 0, 0, 0.82) 0%, rgba(0, 0, 0, 0.55) 35%, rgba(0, 0, 0, 0) 65%); justify-content: flex-start; padding-left: 9vw; }
 .logo { font-family: var(--brand); font-weight: 700; font-size: 74px; letter-spacing: 0.06em; line-height: 1; margin-bottom: 8px; color: #fff4d6; text-shadow: 0 0 30px rgba(242, 201, 76, 0.35); }
 .logo .t { color: var(--verity); }
 .tagline { font-size: 13px; letter-spacing: 0.4em; text-transform: uppercase; color: var(--ink-dim); margin-bottom: 44px; }

@@ -202,8 +202,15 @@ export class Game {
     this.frame(dt);
   };
 
+  /** QA helper: simulate `sec` seconds of game time quickly (no rendering). */
+  advance(sec: number, step = 1 / 30): void {
+    const n = Math.ceil(sec / step);
+    for (let i = 0; i < n; i++) this.frame(step, false);
+    this.renderer.render(0);
+  }
+
   /** Advances the simulation one frame (also used by the QA harness). */
-  frame(dt: number): void {
+  frame(dt: number, render = true): void {
     this.fpsAcc += dt;
     this.fpsFrames++;
     if (this.fpsAcc >= 0.5) {
@@ -233,6 +240,13 @@ export class Game {
       this.updateFear(sdt);
       this.updateEmitters(sdt);
     }
+    if (this.mode === 'menu' && this.zone) {
+      this.time += dt;
+      this.mats.shared.uTime.value = this.time;
+      for (const u of this.zone.updaters) u(dt);
+      this.lights.update(dt, this.renderer.camera);
+      this.co.update(dt);
+    }
     // visuals keep updating while paused (lights flicker etc. frozen otherwise)
     const cam = this.renderer.camera;
     const vis = this.zone?.updateCells(cam.position) ?? null;
@@ -244,7 +258,7 @@ export class Game {
     this.updateHud(dt);
     this.ui.update(dt);
     this.debug?.update(dt);
-    this.renderer.render(dt);
+    if (render) this.renderer.render(dt);
     this.input.endFrame();
   }
 
@@ -317,8 +331,6 @@ export class Game {
       this.renderer.scene.add(this.zone.root);
       this.applyEnv(this.zone);
       this.flashlight.on = false;
-      const sp = this.zone.spawns.start;
-      this.player.teleport(sp.pos.x, sp.pos.y, sp.pos.z, sp.yaw);
       this.player.lookLocked = true;
       this.player.movementLocked = true;
       this.renderer.fx.fade = 1;
@@ -464,6 +476,8 @@ export class Game {
     this.player.lookLocked = false;
     this.player.movementLocked = false;
     this.player.speedMul = 1;
+    this.renderer.camera.fov = this.settings.fov;
+    this.renderer.camera.updateProjectionMatrix();
     zone.forceAllVisible();
     this.renderer.precompile();
     this.renderer.render(0);

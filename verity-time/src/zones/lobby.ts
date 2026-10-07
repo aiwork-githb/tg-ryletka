@@ -15,6 +15,7 @@ import { breakerInit, breakerLoad, breakerPowered, breakerToggle, BREAKER_CAP, B
 import { KeypadScreen } from '../ui/screens/Keypad';
 import { box, cyl, ModelBuilder, rbox } from '../world/geom';
 import { Rng } from '../assets/noise';
+import { dust, lightCone, sparks } from '../world/vfx';
 
 const THEATER_CODE = '140391';
 
@@ -147,6 +148,7 @@ export const lobby: ZoneDef = {
         g.audio.play('breaker_trip', { pos: new THREE.Vector3(18.5, 1.4, -15.7), volume: 1 });
         g.player.addTrauma(0.35);
         g.notify(`ПЕРЕГРУЗКА: больше ${BREAKER_CAP} А. Автомат ввода отключил все линии.`);
+        sparks(g, new THREE.Vector3(18.5, 1.9, -15.6), 60);
         g.co.start(tripScare(g), 'zone');
       } else {
         g.audio.play('breaker_on', { pos: new THREE.Vector3(18.5, 1.4, -15.7), volume: 0.6 });
@@ -231,6 +233,8 @@ export const lobby: ZoneDef = {
       run: () => g.audio.play('squeak', { pos: new THREE.Vector3(-10, 1, -20), volume: 0.5, ref: 4 }),
     });
 
+    dust(g, b, new THREE.Vector3(-14, 0.3, -24), new THREE.Vector3(14, 8, 0), 900);
+    dust(g, b, new THREE.Vector3(-9, 0.3, -60), new THREE.Vector3(9, 7, -40), 500);
     b.spawn('entrance', 0, 0, 4.5, 0);
     b.spawn('start', 0, 0, 4.5, 0);
     b.spawn('north', 0, 0, -14, 0);
@@ -1031,6 +1035,7 @@ function buildTheater(g: Game, b: LevelBuilder, refs: LobbyRefs): void {
   for (const x of [-3, 3]) {
     const v = b.spot(x, 7.4, -46, 0, 1.2, -55, { color: 0xfff0d0, intensity: 260, distance: 18, angle: 0.28, penumbra: 0.45, priority: 4 });
     refs.line[5].push(v);
+    lightCone(g, b, new THREE.Vector3(x, 7.4, -46), new THREE.Vector3(x * 0.2, 1.1, -55), 1.6, 0xfff0d0, 0.06, v);
     refs.stageLights.push(v);
     b.prop(FX.stageSpot(m).group, x, 7.6, -46, 0, { collide: false });
   }
