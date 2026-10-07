@@ -352,11 +352,9 @@ export function lamp(
     }
   }
   model.group.rotation.y = opts.ry ?? 0;
-  b.prop(model.group, x, y, z, opts.ry ?? 0, { collide: false, static: false, cell: opts.cell });
-  model.group.traverse((o) => {
-    const mesh = o as THREE.Mesh;
-    if (mesh.isMesh && mesh.material === model.bulb) mesh.castShadow = false;
-  });
+  // fixtures are static geometry; the bulb keeps its own material so the
+  // light can still drive its emissive intensity after batching
+  b.prop(model.group, x, y, z, opts.ry ?? 0, { collide: false, cell: opts.cell });
   const lp = model.lightOffset.clone().applyAxisAngle(new THREE.Vector3(0, 1, 0), opts.ry ?? 0).add(new THREE.Vector3(x, y, z));
   const defaults: Record<LampKind, [string, number, number]> = {
     troffer: ['#e6eeff', 5, 8],

@@ -91,7 +91,7 @@ export class Renderer {
     }
     this.bloom = null;
     if (s.effects !== 'low') {
-      this.bloom = new UnrealBloomPass(new THREE.Vector2(size.x / 2, size.y / 2), s.effects === 'high' ? 0.55 : 0.4, 0.6, 0.82);
+      this.bloom = new UnrealBloomPass(new THREE.Vector2(size.x / 2, size.y / 2), s.effects === 'high' ? 0.35 : 0.25, 0.55, 0.92);
       this.composer.addPass(this.bloom);
     }
     this.composer.addPass(new OutputPass());

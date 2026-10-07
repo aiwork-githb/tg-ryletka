@@ -52,7 +52,7 @@ export function pendant(m: Materials, drop = 1.2, color = '#ffd9a0', shade = '#2
   const shadeM = m.painted(shade, 0.5);
   (shadeM as any).side = THREE.DoubleSide;
   b.add(prof, shadeM, 0, -drop, 0);
-  const bulb = bulbMat(color, 3);
+  const bulb = bulbMat(color, 1.6);
   b.add(sphere(0.06, 12, 10), bulb, 0, -drop - 0.14, 0).castShadow = false;
   return { group: b.group, bulb, lightOffset: new THREE.Vector3(0, -drop - 0.3, 0) };
 }

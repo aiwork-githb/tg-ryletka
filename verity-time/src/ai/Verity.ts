@@ -73,7 +73,7 @@ export class Verity {
   doors: DoorLike[] = [];
   hides: HideLike[] = [];
   // watch / guide parameters
-  private watchOpts: { vanishDist: number; maxTime: number; onVanish?: () => void; seen: boolean; unseenFor: number; t: number } | null = null;
+  private watchOpts: { vanishDist: number; maxTime: number; onVanish?: (reason: 'near' | 'unseen' | 'time') => void; seen: boolean; unseenFor: number; t: number; unseenVanish: boolean } | null = null;
   private guidePoints: Array<{ p: THREE.Vector3; wait?: number; say?: string; gesture?: Gesture; until?: () => boolean }> = [];
   private guideIdx = 0;
   private guideWait = 0;
@@ -200,10 +200,10 @@ export class Verity {
   }
 
   /** Stands and watches; vanishes if approached or after losing sight. */
-  watch(p: THREE.Vector3, opts: { vanishDist?: number; maxTime?: number; onVanish?: () => void } = {}): void {
-    this.spawn(p, 0, 'watch');
+  watch(p: THREE.Vector3, opts: { vanishDist?: number; maxTime?: number; onVanish?: (reason: 'near' | 'unseen' | 'time') => void; yaw?: number; unseenVanish?: boolean } = {}): void {
+    this.spawn(p, opts.yaw ?? 0, 'watch');
     this.lookAtPlayer = true;
-    this.watchOpts = { vanishDist: opts.vanishDist ?? 7, maxTime: opts.maxTime ?? 60, onVanish: opts.onVanish, seen: false, unseenFor: 0, t: 0 };
+    this.watchOpts = { vanishDist: opts.vanishDist ?? 7, maxTime: opts.maxTime ?? 60, onVanish: opts.onVanish, seen: false, unseenFor: 0, t: 0, unseenVanish: opts.unseenVanish ?? true };
   }
 
   guide(points: Array<{ p: THREE.Vector3; wait?: number; say?: string; gesture?: Gesture; until?: () => boolean }>): void {
@@ -333,10 +333,11 @@ export class Verity {
       w.unseenFor = 0;
     } else if (w.seen) w.unseenFor += dt;
     const d = this.pos.distanceTo(this.g.player.pos);
-    if (d < w.vanishDist || (w.seen && w.unseenFor > 1.0) || w.t > w.maxTime) {
+    const reason = d < w.vanishDist ? 'near' : w.unseenVanish && w.seen && w.unseenFor > 1.0 ? 'unseen' : w.t > w.maxTime ? 'time' : null;
+    if (reason) {
       const cb = w.onVanish;
       this.hide();
-      cb?.();
+      cb?.(reason);
     }
   }
 

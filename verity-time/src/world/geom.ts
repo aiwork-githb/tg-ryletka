@@ -163,9 +163,9 @@ export class ModelBuilder {
  */
 export function bakeByMaterial(root: THREE.Object3D, into: Map<THREE.Material, THREE.BufferGeometry[]>): void {
   root.updateMatrixWorld(true);
-  root.traverse((o) => {
+  root.traverseVisible((o) => {
     const mesh = o as THREE.Mesh;
-    if (!mesh.isMesh || !mesh.visible || mesh.userData.noBatch) return;
+    if (!mesh.isMesh || mesh.userData.noBatch) return;
     const mat = mesh.material as THREE.Material;
     if (Array.isArray(mesh.material)) return;
     let g = mesh.geometry.clone();

@@ -13,12 +13,12 @@ export class Flashlight {
   private flickerT = 0;
   private flickerStrength = 0;
   private level = 1;
-  baseIntensity = 70;
+  baseIntensity = 42;
   /** Forced off by scripts (e.g. power drain near Verity). */
   suppressed = 0;
 
   constructor(scene: THREE.Scene) {
-    this.light = new THREE.SpotLight(0xfff0d8, this.baseIntensity, 30, 0.5, 0.55, 1.6);
+    this.light = new THREE.SpotLight(0xfff0d8, this.baseIntensity, 30, 0.5, 0.55, 1.75);
     this.light.name = 'Flashlight';
     this.light.shadow.bias = -0.0004;
     this.light.shadow.normalBias = 0.02;

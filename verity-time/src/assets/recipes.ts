@@ -219,9 +219,9 @@ const wallpaper: Recipe = (s, p) => {
       s.b[i] *= 1 - e * 0.3;
     }
   }
-  s.streaks(wear, [0.42, 0.34, 0.2], 10);
-  s.waterStains(Math.round(1 + 3 * wear), 0.35);
-  s.grime(wear * 0.6, 2);
+  s.streaks(wear * 0.45, [0.42, 0.34, 0.2], 8);
+  s.waterStains(Math.round(1 + 2 * wear), 0.25);
+  s.grime(wear * 0.25, 2);
 };
 
 /** Painted plaster / drywall. */
@@ -245,9 +245,9 @@ const plaster: Recipe = (s, p) => {
     for (let i = 0; i < s.n; i++) s.height[i] -= crack[i] * 0.25;
   }
   s.chips(0.86 - wear * 0.06, [0.6, 0.58, 0.55], 0.95, 0, 501, 18);
-  s.streaks(wear * 0.8, [0.38, 0.32, 0.22], 8);
-  s.grime(wear * 0.7, 2.5);
-  s.waterStains(Math.round(wear * 3), 0.3);
+  s.streaks(wear * 0.45, [0.38, 0.32, 0.22], 7);
+  s.grime(wear * 0.35, 2.5);
+  s.waterStains(Math.round(wear * 2), 0.25);
 };
 
 /** Raw cast concrete. */
