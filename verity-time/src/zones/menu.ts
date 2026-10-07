@@ -51,7 +51,9 @@ export const menu: ZoneDef = {
     rig.setStage(1);
     rig.root.position.set(0, 1, -13.2);
     b.addDynamic(rig.root);
-    const spot = b.spot(0, 6.6, -7, 0, 1.2, -13.2, { color: 0xfff0d0, intensity: 420, distance: 16, angle: 0.24, penumbra: 0.5, priority: 5 });
+    const spot = b.spot(0, 6.6, -7, 0, 1.2, -13.2, { color: 0xfff0d0, intensity: 480, distance: 16, angle: 0.24, penumbra: 0.5, priority: 5 });
+    // a faint warm fill from the footlights so the face reads
+    b.light(0, 1.6, -11.2, { color: '#ffcf9a', intensity: 1.5, distance: 4, priority: 4 });
     lightCone(g, b, new THREE.Vector3(0, 6.6, -7), new THREE.Vector3(0, 1, -13.2), 1.4, 0xfff0d0, 0.09, spot);
     lamp(g, b, 'exit', -7.9, 2.6, -1, { ry: Math.PI / 2 });
     dust(g, b, new THREE.Vector3(-3, 1, -14), new THREE.Vector3(3, 6.5, -6), 260, 0xfff2dc, 0.03);

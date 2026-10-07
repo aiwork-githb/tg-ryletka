@@ -369,17 +369,10 @@ export class Game {
       this.flashlight.on = false;
       this.player.lookLocked = true;
       this.player.movementLocked = true;
+      // fade on the wall clock: on a slow first frame a per-frame fade would
+      // leave the menu black for many seconds
       this.renderer.fx.fade = 1;
-      this.co.start(
-        (function* (g: Game): CoGen {
-          for (let t = 0; t < 1; t += 0.02) {
-            g.renderer.fx.fade = 1 - t;
-            yield 0.03;
-          }
-          g.renderer.fx.fade = 0;
-        })(this),
-        'menu',
-      );
+      void this.fadeIn(1.5);
       this.mode = 'menu';
     } catch (e) {
       console.warn('menu scene failed', e);
@@ -590,12 +583,17 @@ export class Game {
     return this.tweenFade(0, sec);
   }
 
+  private fadeToken = 0;
+
   private tweenFade(target: number, sec: number): Promise<void> {
+    // a newer fade supersedes this one (e.g. "New game" during the menu fade-in)
+    const token = ++this.fadeToken;
     return new Promise((res) => {
       const fx = this.renderer.fx;
       const from = fx.fade;
       const t0 = performance.now();
       const step = () => {
+        if (token !== this.fadeToken) return res();
         const k = Math.min(1, (performance.now() - t0) / (sec * 1000));
         fx.fade = from + (target - from) * k;
         if (k < 1) requestAnimationFrame(step);
