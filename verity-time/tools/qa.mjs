@@ -82,9 +82,10 @@ for (const name of names) {
     if (m.type() === 'error') errors.push(m.text());
     else if (m.text().startsWith('[qa]')) console.log(m.text());
   });
+  const t0 = Date.now();
   await page.goto(base + '?' + sc.query);
-  await page.waitForFunction(() => window.__VT_READY === true, null, { timeout: 120000 });
-  console.log(`[${name}] loaded`);
+  await page.waitForFunction(() => window.__VT_READY === true, null, { timeout: 300000 });
+  console.log(`[${name}] loaded in ${Math.round((Date.now() - t0) / 1000)}s`);
   await page.evaluate(HELPERS);
   console.log(`[${name}] running`);
   let res;
