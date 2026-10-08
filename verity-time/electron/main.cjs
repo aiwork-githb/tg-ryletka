@@ -83,6 +83,14 @@ function create() {
       if (level >= 2) console.log('[page]', message);
     });
     setTimeout(async () => {
+      // optional probe (debug builds expose window.__VT)
+      if (process.env.VT_SMOKE_JS) {
+        try {
+          console.log('[smoke-js]', JSON.stringify(await win.webContents.executeJavaScript(process.env.VT_SMOKE_JS)));
+        } catch (e) {
+          console.log('[smoke-js] error', String(e));
+        }
+      }
       const img = await win.webContents.capturePage();
       fs.writeFileSync(process.env.VT_SMOKE, img.toPNG());
       const info = await win.webContents.executeJavaScript('JSON.stringify({ native: !!window.native, menu: !!document.querySelector(".menu-list"), debugHandle: typeof window.__VT })');

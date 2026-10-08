@@ -281,6 +281,24 @@ export const SFX: Record<string, Gen> = {
   step_plastic: footstep('plastic'),
   step_grate: footstep('grate'),
 
+  // bare, heavy feet: a low thud and a wet slap
+  step_flesh: (sr, rng) => {
+    const b = buf(sr, 0.32);
+    const k = rng.range(0.85, 1.15);
+    mixInto(b, thump(sr, 85 * k, 38, 0.16, 0.05), 1);
+    mixInto(b, noiseBurst(sr, rng, 0.07, 1100 * k, 1.4, 0.012), 0.75);
+    mixInto(b, noiseBurst(sr, rng, 0.05, 2600, 2.2, 0.006), 0.3, Math.floor(sr * 0.012));
+    return edgeFade(normalize(b, 0.85), sr);
+  },
+  // a rubber ball landing
+  bounce_rubber: (sr, rng) => {
+    const b = buf(sr, 0.22);
+    const k = rng.range(0.9, 1.1);
+    mixInto(b, thump(sr, 150 * k, 70, 0.12, 0.035), 1);
+    mixInto(b, noiseBurst(sr, rng, 0.05, 700 * k, 1.1, 0.01), 0.35);
+    return edgeFade(normalize(b, 0.8), sr);
+  },
+
   land: (sr, rng) => {
     const b = buf(sr, 0.4);
     mixInto(b, thump(sr, 90, 40, 0.3, 0.08), 1);

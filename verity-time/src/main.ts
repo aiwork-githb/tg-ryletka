@@ -25,7 +25,7 @@ async function start(): Promise<void> {
   const qs = new URLSearchParams(location.search);
   if (__DEBUG__ && qs.has('modelview')) {
     const { modelView } = await import('./debug/ModelView');
-    modelView(qs.get('modelview') || 'verity');
+    void modelView(qs.get('modelview') || 'verity');
     return;
   }
   if (__DEBUG__ && qs.has('texdebug')) {

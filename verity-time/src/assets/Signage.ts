@@ -25,146 +25,155 @@ export interface VerityDrawOpts {
   wave?: boolean;
 }
 
-/** 2D illustration of Verity used across posters, logos, drawings. */
+/** 2D illustration of Verity used across posters, logos, drawings: the
+ * yellow smiley ball (the toy's whole design is the face). */
 export function drawVerity(g: CanvasRenderingContext2D, x: number, y: number, r: number, o: VerityDrawOpts = {}): void {
   const wob = o.wobble ?? 0;
   const rng = new Rng(Math.floor(x * 13 + y * 7 + r));
   const j = () => (rng.next() - 0.5) * wob * r;
+  const mood = o.mood ?? 'happy';
   g.save();
   g.lineJoin = 'round';
   g.lineCap = 'round';
-  const outline = o.outline ?? '#3b2c3f';
-  // legs + shoes
-  g.fillStyle = '#d7372f';
-  for (const sx of [-1, 1]) {
-    g.strokeStyle = '#ef8a7e';
-    g.lineWidth = r * 0.14;
-    g.beginPath();
-    g.moveTo(x + sx * r * 0.35, y + r * 0.8);
-    g.lineTo(x + sx * r * 0.36 + j(), y + r * 1.15);
-    g.stroke();
-    g.beginPath();
-    g.ellipse(x + sx * r * 0.4 + j(), y + r * 1.22, r * 0.26, r * 0.13, 0, 0, Math.PI * 2);
-    g.fill();
-    g.lineWidth = r * 0.03;
-    g.strokeStyle = outline;
-    g.stroke();
+  const ink = '#0b0805';
+  // a little hop: motion arcs beside the ball
+  if (o.wave) {
+    g.strokeStyle = o.outline ?? '#3b2c3f';
+    g.lineWidth = r * 0.05;
+    for (let i = 0; i < 2; i++) {
+      g.beginPath();
+      g.arc(x + r * 1.05 + i * r * 0.18, y - r * 0.15, r * (0.35 + i * 0.12), -0.5, 0.5);
+      g.stroke();
+    }
   }
-  // arms
-  g.strokeStyle = '#f4d35e';
-  g.lineWidth = r * 0.12;
+  // the ball
   g.beginPath();
-  g.moveTo(x - r * 0.95, y);
-  g.quadraticCurveTo(x - r * 1.35, y + r * 0.25, x - r * 1.25 + j(), y + r * 0.55);
-  g.stroke();
-  g.beginPath();
-  g.moveTo(x + r * 0.95, y);
-  if (o.wave) g.quadraticCurveTo(x + r * 1.4, y - r * 0.3, x + r * 1.3 + j(), y - r * 0.75);
-  else g.quadraticCurveTo(x + r * 1.35, y + r * 0.25, x + r * 1.25 + j(), y + r * 0.55);
-  g.stroke();
-  g.fillStyle = '#fbf6ea';
-  for (const [hx, hy] of [
-    [x - r * 1.25, y + r * 0.6],
-    o.wave ? [x + r * 1.3, y - r * 0.8] : [x + r * 1.25, y + r * 0.6],
-  ]) {
-    g.beginPath();
-    g.arc(hx + j(), hy + j(), r * 0.15, 0, Math.PI * 2);
-    g.fill();
-    g.lineWidth = r * 0.03;
-    g.strokeStyle = outline;
-    g.stroke();
-  }
-  // body: two tone
-  g.save();
-  g.beginPath();
-  g.arc(x + j() * 0.3, y + j() * 0.3, r, 0, Math.PI * 2);
-  g.clip();
-  g.fillStyle = '#f4d35e';
-  g.fillRect(x - r, y - r, r * 2, r * 2);
-  g.fillStyle = '#ef8a7e';
-  g.fillRect(x - r, y + r * 0.42, r * 2, r);
+  if (wob > 0) {
+    for (let i = 0; i <= 24; i++) {
+      const a = (i / 24) * Math.PI * 2;
+      const rr = r * (1 + (rng.next() - 0.5) * wob * 0.15);
+      if (i === 0) g.moveTo(x + Math.cos(a) * rr, y + Math.sin(a) * rr);
+      else g.lineTo(x + Math.cos(a) * rr, y + Math.sin(a) * rr);
+    }
+    g.closePath();
+  } else g.arc(x, y, r, 0, Math.PI * 2);
+  g.fillStyle = mood === 'wrong' ? '#dcb92a' : '#f6d21e';
+  g.fill();
   if (!o.flat) {
-    const sh = g.createRadialGradient(x - r * 0.35, y - r * 0.4, r * 0.1, x, y, r * 1.1);
-    sh.addColorStop(0, 'rgba(255,255,255,0.45)');
-    sh.addColorStop(0.5, 'rgba(255,255,255,0)');
-    sh.addColorStop(1, 'rgba(80,40,20,0.35)');
+    g.save();
+    g.clip();
+    const sh = g.createRadialGradient(x - r * 0.35, y - r * 0.4, r * 0.05, x, y, r * 1.05);
+    sh.addColorStop(0, 'rgba(255,255,255,0.55)');
+    sh.addColorStop(0.35, 'rgba(255,255,255,0)');
+    sh.addColorStop(1, 'rgba(120,70,0,0.4)');
     g.fillStyle = sh;
     g.fillRect(x - r, y - r, r * 2, r * 2);
+    g.restore();
   }
-  g.fillStyle = '#2fa79b';
-  g.fillRect(x - r, y + r * 0.36, r * 2, r * 0.13);
-  g.restore();
-  g.lineWidth = r * 0.045;
-  g.strokeStyle = outline;
-  g.beginPath();
-  g.arc(x, y, r, 0, Math.PI * 2);
-  g.stroke();
-  // antenna
-  g.strokeStyle = '#7a8088';
-  g.lineWidth = r * 0.04;
-  g.beginPath();
-  g.moveTo(x, y - r);
-  for (let i = 0; i < 6; i++) g.lineTo(x + (i % 2 ? r * 0.05 : -r * 0.05), y - r - (i + 1) * r * 0.05);
-  g.stroke();
-  g.fillStyle = '#ffd84a';
-  star(g, x + j(), y - r * 1.48 + j(), r * 0.24, r * 0.1, 5);
-  g.lineWidth = r * 0.025;
-  g.strokeStyle = outline;
-  g.stroke();
-  // face
-  const mood = o.mood ?? 'happy';
-  for (const sx of [-1, 1]) {
-    const ex = x + sx * r * 0.34 + j() * 0.3;
-    const ey = y - r * 0.2;
-    g.fillStyle = '#ffffff';
-    g.beginPath();
-    g.ellipse(ex, ey, r * 0.24, r * 0.29, 0, 0, Math.PI * 2);
-    g.fill();
-    g.lineWidth = r * 0.03;
-    g.strokeStyle = outline;
+  if (o.outline || wob > 0) {
+    g.lineWidth = r * 0.045;
+    g.strokeStyle = o.outline ?? '#3b2c3f';
     g.stroke();
-    if (mood !== 'blank') {
-      g.fillStyle = mood === 'wrong' ? '#000' : '#1f6f9f';
+  }
+  // eyes: two black ovals (slits under bruises when it's wrong)
+  for (const sx of [-1, 1]) {
+    const ex = x + sx * r * 0.21 + j() * 0.3;
+    const ey = y - r * 0.2 + j() * 0.3;
+    if (mood === 'wrong') {
+      const gg = g.createRadialGradient(ex, ey, r * 0.02, ex, ey, r * 0.24);
+      gg.addColorStop(0, 'rgba(90,10,8,0.9)');
+      gg.addColorStop(1, 'rgba(120,30,10,0)');
+      g.fillStyle = gg;
       g.beginPath();
-      g.arc(ex + r * 0.03, ey + r * 0.03, mood === 'wrong' ? r * 0.05 : r * 0.14, 0, Math.PI * 2);
+      g.ellipse(ex, ey, r * 0.2, r * 0.27, 0, 0, Math.PI * 2);
       g.fill();
-      if (mood !== 'wrong') {
-        g.fillStyle = '#05060a';
-        g.beginPath();
-        g.arc(ex + r * 0.03, ey + r * 0.03, r * 0.07, 0, Math.PI * 2);
-        g.fill();
-        g.fillStyle = '#fff';
-        g.beginPath();
-        g.arc(ex + r * 0.08, ey - r * 0.04, r * 0.04, 0, Math.PI * 2);
-        g.fill();
-      }
+    }
+    g.fillStyle = ink;
+    g.beginPath();
+    if (mood === 'blank') {
+      g.lineWidth = r * 0.03;
+      g.strokeStyle = ink;
+      g.ellipse(ex, ey, r * 0.07, r * 0.112, 0, 0, Math.PI * 2);
+      g.stroke();
+      continue;
+    }
+    if (mood === 'wrong') g.ellipse(ex, ey, r * 0.045, r * 0.15, 0, 0, Math.PI * 2);
+    else g.ellipse(ex, ey, r * 0.07, r * 0.112, mood === 'sad' ? sx * -0.25 : 0, 0, Math.PI * 2);
+    g.fill();
+    if (mood !== 'wrong' && !o.flat) {
+      g.fillStyle = 'rgba(255,255,255,0.8)';
+      g.beginPath();
+      g.arc(ex - r * 0.02, ey - r * 0.05, r * 0.02, 0, Math.PI * 2);
+      g.fill();
     }
     if (mood === 'sad') {
       g.fillStyle = '#9fd3ff';
       g.beginPath();
-      g.ellipse(ex + r * 0.05, ey + r * 0.38, r * 0.05, r * 0.09, 0, 0, Math.PI * 2);
+      g.ellipse(ex + sx * r * 0.02, ey + r * 0.24, r * 0.035, r * 0.06, 0, 0, Math.PI * 2);
       g.fill();
     }
   }
-  g.fillStyle = 'rgba(242,139,154,0.7)';
-  for (const sx of [-1, 1]) {
+  // mouth
+  const smile = (w: number, yc: number, yb: number, t: number) => {
     g.beginPath();
-    g.ellipse(x + sx * r * 0.62, y + r * 0.05, r * 0.11, r * 0.07, 0, 0, Math.PI * 2);
-    g.fill();
-  }
-  g.strokeStyle = '#2a1720';
-  g.lineWidth = r * 0.06;
-  g.beginPath();
-  if (mood === 'happy') g.arc(x, y + r * 0.02, r * 0.26, 0.15 * Math.PI, 0.85 * Math.PI);
-  else if (mood === 'sad') g.arc(x, y + r * 0.42, r * 0.2, 1.15 * Math.PI, 1.85 * Math.PI);
+    g.moveTo(x - w * r + j() * 0.2, y + yc * r);
+    g.quadraticCurveTo(x, y + (2 * yb - yc) * r, x + w * r + j() * 0.2, y + yc * r);
+    g.lineWidth = t * r;
+    g.strokeStyle = ink;
+    g.stroke();
+  };
+  const ticks = (w: number, yc: number) => {
+    g.lineWidth = r * 0.035;
+    for (const sx of [-1, 1]) {
+      g.beginPath();
+      g.moveTo(x + sx * w * r - sx * r * 0.03, y + (yc - 0.05) * r);
+      g.lineTo(x + sx * w * r + sx * r * 0.03, y + (yc + 0.05) * r);
+      g.stroke();
+    }
+  };
+  if (mood === 'happy') {
+    smile(0.6, 0.06, 0.38, 0.045);
+    ticks(0.6, 0.06);
+  } else if (mood === 'sad') smile(0.36, 0.45, 0.3, 0.045);
   else if (mood === 'wrong') {
-    g.moveTo(x - r * 0.35, y + r * 0.15);
-    g.quadraticCurveTo(x, y + r * 0.45, x + r * 0.42, y + r * 0.05);
-  } else {
-    g.moveTo(x - r * 0.15, y + r * 0.22);
-    g.lineTo(x + r * 0.15, y + r * 0.22);
+    // a ragged grin full of teeth
+    const W = 0.62;
+    g.beginPath();
+    g.moveTo(x - W * r, y - 0.2 * r);
+    g.quadraticCurveTo(x, y + 0.2 * r, x + W * r, y - 0.2 * r);
+    g.quadraticCurveTo(x, y + 1.15 * r, x - W * r, y - 0.2 * r);
+    g.fillStyle = ink;
+    g.fill();
+    g.lineWidth = r * 0.07;
+    g.strokeStyle = 'rgba(10,6,6,0.7)';
+    g.stroke();
+    g.fillStyle = '#efe6cf';
+    for (let i = 0; i < 9; i++) {
+      const tx = x + (-W * 0.86 + (i + 0.5) * ((W * 1.72) / 9)) * r;
+      const k = (tx - x) / (W * r);
+      const top = y + (-0.2 + 0.2 * (1 - k * k) * 2) * r * 0.5 + r * 0.02;
+      g.beginPath();
+      g.moveTo(tx - r * 0.06, top);
+      g.lineTo(tx + r * 0.06, top);
+      g.lineTo(tx + r * 0.01, top + r * (0.16 + (i % 3) * 0.03));
+      g.closePath();
+      g.fill();
+      const bot = y + (0.35 + 0.25 * (1 - k * k)) * r;
+      g.beginPath();
+      g.moveTo(tx - r * 0.05, bot);
+      g.lineTo(tx + r * 0.05, bot);
+      g.lineTo(tx, bot - r * 0.14);
+      g.closePath();
+      g.fill();
+    }
+  } else if (mood !== 'blank') {
+    g.beginPath();
+    g.moveTo(x - r * 0.25, y + r * 0.3);
+    g.lineTo(x + r * 0.25, y + r * 0.3);
+    g.lineWidth = r * 0.045;
+    g.strokeStyle = ink;
+    g.stroke();
   }
-  g.stroke();
   g.restore();
 }
 

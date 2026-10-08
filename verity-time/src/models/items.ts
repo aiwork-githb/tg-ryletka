@@ -224,36 +224,39 @@ export function powerCell(m: Materials): THREE.Group {
 }
 
 export function plushVerity(m: Materials, s = 1, color = '#f4d35e', worn = 0.3): THREE.Group {
+  // a soft yellow smiley ball with embroidered eyes and smile
   const b = new ModelBuilder();
-  const top = m.cloth(color, worn);
-  const bot = m.cloth('#ef8a7e', worn);
   const r = 0.11 * s;
-  b.add(new THREE.SphereGeometry(r, 18, 12, 0, Math.PI * 2, 0, Math.PI * 0.62), top, 0, r, 0);
-  b.add(new THREE.SphereGeometry(r, 18, 8, 0, Math.PI * 2, Math.PI * 0.62, Math.PI * 0.38), bot, 0, r, 0);
-  b.add(new THREE.TorusGeometry(r * 0.93, r * 0.07, 6, 20), m.cloth('#2fa79b', worn), 0, r * 0.62, 0, Math.PI / 2);
-  const eye = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.2 });
-  for (const sx of [-1, 1]) {
-    b.add(sphere(r * 0.22, 10, 8), m.cloth('#f7f3ea', 0.2), sx * r * 0.35, r * 1.15, r * 0.82).scale.z = 0.5;
-    b.add(sphere(r * 0.11, 8, 6), eye, sx * r * 0.35, r * 1.13, r * 0.93);
+  const ball = new THREE.SphereGeometry(r, 24, 18);
+  // slightly squashed and lumpy, like stuffing
+  const p = ball.getAttribute('position');
+  for (let i = 0; i < p.count; i++) {
+    const x = p.getX(i), y = p.getY(i), z = p.getZ(i);
+    const k = 1 + Math.sin(x * 61 + z * 37) * 0.012 + Math.sin(y * 43) * 0.01;
+    p.setXYZ(i, x * k * 1.04, y * 0.92 * k, z * k * 1.04);
   }
-  b.add(new THREE.TorusGeometry(r * 0.25, r * 0.03, 6, 12, Math.PI), m.flat('#3b1f2b', 0.6, 0), 0, r * 0.88, r * 0.95, 0, 0, Math.PI);
-  b.add(cyl(r * 0.04, r * 0.04, r * 0.4, 6), m.steel('#aaa', 0.4), 0, r * 2.15, 0);
-  const s2 = new THREE.Shape();
-  starPathShape(s2, r * 0.3, r * 0.13);
-  b.add(extrude(s2, r * 0.1, r * 0.03), m.cloth('#ffd84a', worn), 0, r * 2.45, 0);
-  for (const sx of [-1, 1]) b.add(sphere(r * 0.28, 10, 8), m.cloth('#d7372f', worn), sx * r * 0.45, r * 0.15, r * 0.2).scale.set(0.8, 0.6, 1.3);
+  ball.computeVertexNormals();
+  b.add(ball, m.cloth(color, worn), 0, r * 0.92, 0);
+  // the seam where the front and back halves are stitched
+  b.add(new THREE.TorusGeometry(r * 1.035, r * 0.012, 4, 40), m.cloth('#c9a63a', worn), 0, r * 0.92, 0).scale.y = 0.89;
+  const thread = new THREE.MeshStandardMaterial({ color: 0x0c0a08, roughness: 0.85 });
+  for (const sx of [-1, 1]) {
+    const eye = b.add(sphere(r * 0.16, 12, 10), thread, sx * r * 0.22, r * 1.1, r * 0.94);
+    eye.scale.set(0.62, 1.05, 0.35);
+  }
+  // embroidered smile: a curved thread line with little ticks at the ends
+  const pts: THREE.Vector3[] = [];
+  for (let i = 0; i <= 12; i++) {
+    const t = -1 + i / 6;
+    const x = t * r * 0.55;
+    const y = r * 0.78 - (1 - t * t) * r * 0.26;
+    const z = Math.sqrt(Math.max(0, (r * 1.04) ** 2 - x * x - (y - r * 0.92) ** 2 / 0.85)) + r * 0.01;
+    pts.push(new THREE.Vector3(x, y, z));
+  }
+  b.add(tube(pts, r * 0.028, 24, 6), thread);
   return b.group;
 }
 
-function starPathShape(s: THREE.Shape, r1: number, r2: number): void {
-  for (let i = 0; i < 10; i++) {
-    const r = i % 2 ? r2 : r1;
-    const a = (i / 10) * Math.PI * 2 + Math.PI / 2;
-    if (i === 0) s.moveTo(Math.cos(a) * r, Math.sin(a) * r);
-    else s.lineTo(Math.cos(a) * r, Math.sin(a) * r);
-  }
-  s.closePath();
-}
 
 export function envelope(m: Materials): THREE.Group {
   const [c, g] = canvas(512, 320);

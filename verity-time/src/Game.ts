@@ -24,6 +24,7 @@ import { DOCS, LOGS, ITEMS, SECRETS } from './narrative/registry';
 import { NavGrid } from './ai/NavGrid';
 import { buildEnvMap, ENV_PRESETS } from './render/EnvMap';
 import { Verity } from './ai/Verity';
+import { tallOptions } from './models/verity/TallForm';
 import { Director } from './ai/Director';
 import { Carry } from './player/Carry';
 import { MainMenu } from './ui/screens/MainMenu';
@@ -829,6 +830,8 @@ export class Game {
     this.lights.configure(pts, 2);
     this.audio.applySettings(s);
     this.ui.hud.subtitleSettings = { enabled: s.subtitles, size: s.subtitleSize, bg: s.subtitleBackground };
+    // a lighter sculpt of Verity's last form on low settings
+    tallOptions.quality = s.textures === 'low' ? 0.72 : s.textures === 'medium' ? 0.86 : 1;
     if (this.mats.quality !== s.textures) {
       this.mats.quality = s.textures;
       // takes effect on next zone load

@@ -55,6 +55,8 @@ export const core: ZoneDef = {
   ],
   nav: { minX: -6, minZ: -66, maxX: 132, maxZ: 8, probeY: 3.0 },
   build(g, b) {
+    // his last form is sculpted in the background, long before it is needed
+    void g.verity.rig.prepare(4);
     const env = b.zone.env;
     env.fogColor.set(0x0d0805);
     env.fogDensity = 0.03;
@@ -193,6 +195,7 @@ function* chaseStarts(g: Game, restored: boolean): CoGen {
   if (!restored) g.checkpoint('core.chase', { silent: true });
   g.canSave = false;
   const v = g.verity;
+  yield g.verity.rig.prepare(4);
   v.stage = 4;
   v.spawn(V(0, -9), Math.PI, 'scripted');
   v.lookAtPlayer = true;

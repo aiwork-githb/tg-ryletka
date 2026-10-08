@@ -39,8 +39,9 @@ export interface HideLike {
  * Verity as an actor: model, locomotion on the nav grid, perception
  * (sight, hearing, FriendLink bracelet) and behaviour states.
  *
- * Signature mechanic: when chasing, Verity tucks in his limbs and ROLLS like
- * a ball — fast on straights, clumsy at doors and corners.
+ * Signature mechanic: the ball form hops when it walks and ROLLS when it
+ * chases — fast on straights, clumsy at doors and corners. The tall last
+ * form runs instead, and breaks doors with its arms.
  */
 export class Verity {
   readonly rig: VerityRig;
@@ -83,12 +84,10 @@ export class Verity {
   private guideWait = 0;
   private searchT = 0;
   private searchPoints: THREE.Vector3[] = [];
-  private stepSign = 1;
   private doorWait = 0;
   private bashDoor: DoorLike | null = null;
   private bashT = 0;
   private stalkFreeze = 0;
-  private footT = 0;
   private rollSound: import('../audio/AudioEngine').Sound | null = null;
   private stuckT = 0;
   private lastProgress = new THREE.Vector3();
@@ -226,7 +225,8 @@ export class Verity {
     this.state = 'chase';
     this.chaseSpeed = opts.speed ?? this.chaseSpeed;
     if (opts.line) this.catchLine = opts.line;
-    this.rolling = opts.roll ?? true;
+    // only the ball can roll; the tall form runs
+    this.rolling = (opts.roll ?? true) && this.rig.canRoll;
     this.lookAtPlayer = true;
     this.lastSeen.copy(this.g.player.pos);
     this.timeSinceSeen = 0;
@@ -494,7 +494,7 @@ export class Verity {
     const cam = this.g.renderer.camera;
     this.faceTo(cam.position);
     this.rig.setExpression(this.stage >= 3 ? 'grin' : 'open');
-    this.g.player.lookAt(this.pos.clone().setY(this.pos.y + 0.8), 20);
+    this.g.player.lookAt(this.pos.clone().setY(this.pos.y + this.rig.headHeight * 0.95), 20);
     this.g.music.motif({ variant: 'distorted', volume: 0.8 });
     this.g.caught('verity', this.catchLine);
   }
@@ -532,6 +532,7 @@ export class Verity {
         this.bashT -= dt;
         if (this.bashT <= 0 && this.doorWait > 0.3) {
           this.bashT = 1.05;
+          this.rig.strike();
           bd.shake?.();
           this.g.audio.play('impact_metal', { pos: bd.pos.clone().setY(1.1), volume: 0.9, rate: 0.6 + Math.random() * 0.1, ref: 4 });
           this.g.audio.play('door_close', { pos: bd.pos.clone().setY(1.1), volume: 0.6, rate: 0.7 });
@@ -642,15 +643,20 @@ export class Verity {
     this.rollSound?.setRate(0.6 + this.speed * 0.15);
     rig.tuck = this.tuck;
     rig.update(dt, { speed: this.tuck > 0.5 ? 0 : this.speed, time: this.g.time });
-    // footsteps
-    if (this.speed > 0.2 && this.tuck < 0.5) {
-      this.footT += dt * this.speed * 2.2;
-      const s = Math.sign(Math.sin(this.footT * Math.PI));
-      if (s !== this.stepSign) {
-        this.stepSign = s;
-        this.g.audio.play('shoe_squeak', { pos: this.pos, volume: 0.25 + this.speed * 0.1, rateJitter: 0.15, ref: 1.5 });
-        this.g.audio.play('step_plastic', { pos: this.pos, volume: 0.2 + this.speed * 0.08, rate: 1.3, ref: 1.5 });
+    // footsteps / hop landings come from the rig's own gait
+    if (rig.consumeStep() && this.visible) {
+      if (rig.tallShowing) {
+        this.g.audio.play('step_flesh', { pos: this.pos, volume: 0.35 + this.speed * 0.12, rateJitter: 0.1, ref: 2 });
+        if (this.speed > 2.5) this.g.player.addTrauma(Math.max(0, 0.06 - this.pos.distanceTo(this.g.player.pos) * 0.006));
+      } else {
+        this.g.audio.play('bounce_rubber', { pos: this.pos, volume: 0.25 + this.speed * 0.1, rateJitter: 0.12, ref: 1.5 });
+        if (Math.random() < 0.3) this.g.audio.play('shoe_squeak', { pos: this.pos, volume: 0.12, rateJitter: 0.2, ref: 1.5 });
       }
+    }
+    // the tall form stoops under low ceilings
+    if (rig.stage >= 4) {
+      const c = this.g.world.ceilingHeight(this.pos.x, this.pos.z, 0.3, this.pos.y + 0.6, 'ai');
+      rig.headroom = Number.isFinite(c) ? c - this.pos.y : 10;
     }
     if (rig.talking > 0 && this.visible) rig.lookTarget = this.g.renderer.camera.position.clone();
   }

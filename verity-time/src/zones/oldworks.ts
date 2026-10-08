@@ -53,6 +53,8 @@ export const oldworks: ZoneDef = {
   ],
   nav: { minX: -25, minZ: -71, maxX: 31, maxZ: 9, probeY: 2.4 },
   build(g, b) {
+    // his last form is sculpted in the background, long before it is needed
+    void g.verity.rig.prepare(4);
     const env = b.zone.env;
     env.fogColor.set(0x08090a);
     env.fogDensity = 0.04;
